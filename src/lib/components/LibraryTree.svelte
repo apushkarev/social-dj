@@ -44,6 +44,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding: 4px 0;
+    scroll-snap-type: y proximity;
   }
 
   .loading {

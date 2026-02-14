@@ -78,6 +78,7 @@
     white-space: nowrap;
     overflow: hidden;
     transition: background-color var(--td-100);
+    scroll-snap-align: start;
   }
 
   .node-row:hover {
