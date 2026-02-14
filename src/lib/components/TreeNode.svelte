@@ -25,6 +25,7 @@
     class="node-row"
     class:folder={isFolder}
     class:playlist={!isFolder}
+    data-snap-row
     style="padding-left: {12 + depth * 20}px"
     onclick={toggle}
   >
@@ -78,7 +79,6 @@
     white-space: nowrap;
     overflow: hidden;
     transition: background-color var(--td-100);
-    scroll-snap-align: start;
   }
 
   .node-row:hover {
