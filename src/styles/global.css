@@ -1,0 +1,45 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  color: var(--fg4);
+  background-color: var(--bg1);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  cursor: pointer;
+  background: var(--yellow-warm-80);
+  border-radius: 2px;
+  transition-duration: var(--td-100);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--yellow-warm);
+  
+}
+
+.icon svg, .arrow svg {
+  scale: 1.5;
+}
