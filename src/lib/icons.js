@@ -19,4 +19,22 @@ export const icons = {
      <path d="M23 11L14.2164 19.7836C14.1481 19.8477 14.0936 19.9251 14.0564 20.0111C14.0192 20.0971 14 20.1898 14 20.2835C14 20.3772 14.0192 20.4699 14.0564 20.5558C14.0936 20.6418 14.1481 20.7192 14.2164 20.7834L23 29.567" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
+
+  tree: `
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20.7551 4.02908C22.1022 5.18628 22.9899 6.78782 23.2577 8.54338H23.4275C25.1159 8.54338 26.7353 9.21413 27.9292 10.4081C29.1231 11.602 29.7939 13.2213 29.7939 14.9098C29.7939 16.5983 29.1231 18.2176 27.9292 19.4116C26.7353 20.6055 25.1159 21.2762 23.4275 21.2762H8.57251C6.88403 21.2762 5.26471 20.6055 4.07077 19.4116C2.87683 18.2176 2.20609 16.5983 2.20609 14.9098C2.20609 13.2213 2.87683 11.602 4.07077 10.4081C5.26471 9.21413 6.88403 8.54338 8.57251 8.54338C8.84022 6.78782 9.72808 5.18628 11.0751 4.02908C12.4222 2.87187 14.1393 2.2356 15.9151 2.2356C17.691 2.2356 19.4081 2.87187 20.7551 4.02908Z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12.6471 14.9094L15.8303 18.0926V29.7644" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15.8303 18.0926L19.0135 14.9094" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `,
+
+  trophy: `
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 21.3054V29.7939" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8.57249 29.7939H23.4275" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8.5725 2.20607H2.20607V8.5725C2.20607 12.0886 5.05643 14.9389 8.5725 14.9389V2.20607Z" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M23.4275 2.20607H29.7939V8.5725C29.7939 12.0886 26.9437 14.9389 23.4275 14.9389V2.20607Z" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M8.57249 2.20607V13.8779C8.57249 17.98 11.8979 21.3054 16 21.3054C20.1021 21.3054 23.4275 17.98 23.4275 13.8779V2.20607H8.57249Z" stroke="currentColor" stroke-width="2.29" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  `
 };

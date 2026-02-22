@@ -114,10 +114,6 @@
     color: var(--fg3);
   }
 
-  .icon svg, .arrow svg {
-    scale: 1.5;
-  }
-
   .label {
     overflow: hidden;
     text-overflow: ellipsis;
