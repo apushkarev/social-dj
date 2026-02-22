@@ -182,7 +182,7 @@
   }
 
   .header-row .col-title {
-    width: 19rem;
+    width: 19.2rem;
   }
 
   .col-time {
