@@ -108,7 +108,7 @@
     opacity: 0;
     overflow-y: auto;
     pointer-events: none;
-    transition: opacity var(--td-350);
+    transition: opacity var(--td-250);
   }
 
   .settings.visible {
@@ -137,7 +137,7 @@
     font-size: 1em;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.067em;
     color: var(--fg2);
   }
 
@@ -154,7 +154,7 @@
     background: var(--overlay1);
     border: 1px solid var(--border1-5);
     border-radius: var(--brad1);
-    color: var(--fg4);
+    color: var(--fg2-5);
     font-size: 1em;
     cursor: pointer;
     transition: background var(--td-100), border-color var(--td-100), color var(--td-100);
@@ -183,6 +183,7 @@
   .status-msg {
     margin: 0;
     font-size: 0.8125em;
+    letter-spacing: 0.03em;
   }
 
   .status-msg.loading { color: var(--fg2); }
