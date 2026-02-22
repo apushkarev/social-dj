@@ -57,11 +57,11 @@ export const ds = {
 
   /* Borders */
   '--border1': 'rgba(255, 255, 255, 0.02)',
-  '--border1-5': 'rgba(255, 255, 255, 0.05)',
-  '--border2': 'rgba(255, 255, 255, 0.1)',
-  '--border3': 'rgba(255, 255, 255, 0.25)',
-  '--border4': 'rgba(255, 255, 255, 0.35)',
-  '--border6': 'rgba(255, 255, 255, 0.65)',
+  '--border2': 'rgba(255, 255, 255, 0.05)',
+  '--border3': 'rgba(255, 255, 255, 0.1)',
+  '--border4': 'rgba(255, 255, 255, 0.25)',
+  '--border5': 'rgba(255, 255, 255, 0.35)',
+  '--border7': 'rgba(255, 255, 255, 0.65)',
 
   /* Accent colors */
   '--yellow-cool': '#e5d863',

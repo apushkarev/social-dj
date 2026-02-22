@@ -14,7 +14,7 @@
     padding: 0.5em 1em;
     box-sizing: border-box;
     background: var(--overlay1);
-    border: 1px solid var(--border1-5);
+    border: 1px solid var(--border2);
     border-radius: var(--brad1);
     color: var(--fg2-5);
     font-size: 1em;
@@ -24,7 +24,7 @@
 
   .button:hover {
     background: var(--overlay2);
-    border-color: var(--border2);
+    border-color: var(--border3);
     color: var(--fg5);
   }
 
