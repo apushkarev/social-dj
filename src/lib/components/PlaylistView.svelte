@@ -4,13 +4,15 @@
   import ColorTag from './ColorTag.svelte';
   import ColorTagModal from './ColorTagModal.svelte';
 
-  let library = $derived(globals.get('library'));
+  let library            = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
+  let selectedFolderView = $derived(globals.get('selectedFolderView'));
 
   let selectedTrackId = $state(null);
 
   $effect(() => {
     selectedPlaylistId;
+    selectedFolderView;
     selectedTrackId = null;
   });
 
@@ -28,9 +30,20 @@
 
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
 
+  // Effective view: folder aggregation takes priority over single playlist
+  let displayName = $derived(
+    selectedFolderView?.name
+    ?? (playlist?.type === 'playlist' ? playlist.name : null)
+  );
+
+  let activeTrackIds = $derived(
+    selectedFolderView?.trackIds
+    ?? (playlist?.type === 'playlist' ? playlist.trackIds : null)
+  );
+
   let tracks = $derived(
-    playlist?.trackIds
-      ?.map(id => library.tracks[String(id)])
+    activeTrackIds
+      ?.map(id => library?.tracks[String(id)])
       .filter(Boolean) ?? []
   );
 
@@ -53,11 +66,11 @@
   }
 </script>
 
-{#if playlist?.type === 'playlist'}
+{#if displayName && library}
   <div class="playlist-view" style="--num-col-width: {numColWidth}">
 
     <div class="playlist-header">
-      <h1 class="playlist-title">{playlist.name}</h1>
+      <h1 class="playlist-title">{displayName}</h1>
     </div>
 
     <div class="track-scroll">

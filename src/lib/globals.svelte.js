@@ -1,6 +1,12 @@
 let globalStorage = $state({
+
   library: null,
   selectedPlaylistId: null,
+
+  // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
+  selectedFolderView: null,
+
+  altPressed: false
 });
 
 function getGlobals() {

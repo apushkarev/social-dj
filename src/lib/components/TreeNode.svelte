@@ -15,10 +15,35 @@
   let hasChildren = $derived(isFolder && node.children && node.children.length > 0);
   let isSelected = $derived(!isFolder && globals.get('selectedPlaylistId') === node.id);
 
-  function handleClick() {
+  // Recursively collect unique track IDs from all playlists in a subtree.
+  // Uses insertion order for deduplication (Set preserves it).
+  function collectFolderTrackIds(n) {
+    const seen = new Set();
+    function recurse(node) {
+      if (node.type === 'playlist') {
+        for (const id of (node.trackIds ?? [])) seen.add(String(id));
+      } else if (node.children) {
+        for (const child of node.children) recurse(child);
+      }
+    }
+    recurse(n);
+    return [...seen];
+  }
+
+  function handleClick(e) {
+
     if (isFolder) {
-      treeState.toggle(node.id);
+      if (e.altKey) {
+        globals.set('selectedPlaylistId', null);
+        globals.set('selectedFolderView', {
+          name: node.name,
+          trackIds: collectFolderTrackIds(node),
+        });
+      } else {
+        treeState.toggle(node.id);
+      }
     } else {
+      globals.set('selectedFolderView', null);
       globals.set('selectedPlaylistId', node.id);
     }
   }
