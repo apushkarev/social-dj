@@ -93,6 +93,7 @@
   .playlist-header {
     flex-shrink: 0;
     padding: 1em 2em 0.875em;
+    margin-bottom: 1em;
     border-bottom: 1px solid var(--border2);
   }
 
@@ -116,7 +117,6 @@
     align-items: center;
     gap: 1em;
     height: 2.5em;
-    border-radius: var(--brad2);
 
     margin-bottom: 0.25em;
   }
@@ -136,6 +136,9 @@
     letter-spacing: 0.08em;
     color: var(--fg1);
 
+    padding-bottom: 1em;
+    box-sizing: border-box;
+
     gap: 1.333em;
   }
 
@@ -144,6 +147,8 @@
     color: var(--fg3);
     font-size: 1em;
     transition: background-color var(--td-100);
+
+    border-radius: var(--brad2);
   }
 
   .data-row:hover {
