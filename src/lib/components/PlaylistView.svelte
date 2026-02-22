@@ -1,5 +1,8 @@
 <script>
   import { globals } from '../globals.svelte.js';
+  import { colorTags } from '../color-tags.svelte.js';
+  import ColorTag from './ColorTag.svelte';
+  import ColorTagModal from './ColorTagModal.svelte';
 
   let library = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
@@ -32,8 +35,14 @@
   );
 
   let numColWidth = $derived(
-    `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1.5}rem`
+    `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
   );
+
+  let modalState = $state(null);
+
+  function handleTagClick(trackId, rect) {
+    modalState = modalState?.trackId === trackId ? null : { trackId, rect };
+  }
 
   function formatTime(ms) {
     if (!ms) return '—';
@@ -55,7 +64,7 @@
 
       <div class="track-row header-row">
         <div class="col col-num">#</div>
-        <!-- <div class="col col-tag"></div> -->
+        <div class="col col-tag">Tag</div>
         <div class="col col-title">Title</div>
         <div class="col col-time">Time</div>
         <div class="col col-artist">Artist</div>
@@ -69,7 +78,9 @@
           onclick={() => selectedTrackId = track.trackId}
         >
           <div class="col col-num">{i + 1}</div>
-          <!-- <div class="col col-tag"></div> -->
+          <div class="col col-tag">
+            <ColorTag trackId={track.trackId} onopen={handleTagClick} />
+          </div>
           <div class="col col-title">{track.name ?? '—'}</div>
           <div class="col col-time">{formatTime(track.totalTime)}</div>
           <div class="col col-artist">{track.artist ?? '—'}</div>
@@ -80,6 +91,16 @@
     </div>
 
   </div>
+
+  {#if modalState}
+    <ColorTagModal
+      anchorRect={modalState.rect}
+      currentColor={colorTags.get(String(modalState.trackId))}
+      onselect={(color) => colorTags.set(String(modalState.trackId), color)}
+      onclose={() => modalState = null}
+    />
+  {/if}
+
 {/if}
 
 <style>
@@ -115,7 +136,7 @@
     display: flex;
     align-items: center;
     gap: 1em;
-    height: 2.5em;
+    height: 3em;
 
     margin-bottom: 0.25em;
   }
@@ -181,7 +202,9 @@
   
 
   .col-tag {
-    width: 1.5rem;
+    width: 2rem;
+    display: flex;
+    align-items: center;
   }
 
   .col-title {
