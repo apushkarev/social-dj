@@ -1,6 +1,7 @@
 <script>
   import LibraryTree from './lib/components/LibraryTree.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
+  import Settings from './lib/components/Settings.svelte';
 
   const stored = localStorage.getItem('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
@@ -25,6 +26,7 @@
     </div>
   </div>
   <main class="content">
+    <Settings show={selectedItem === 'settings'} />
   </main>
 </div>
 
@@ -74,5 +76,6 @@
     flex: 1;
     height: 100%;
     overflow: hidden;
+    position: relative;
   }
 </style>

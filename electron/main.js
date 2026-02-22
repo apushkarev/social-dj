@@ -1,6 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve } from 'path';
+import { writeFileSync, mkdirSync } from 'fs';
+import plist from 'plist';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isDev = !app.isPackaged;
@@ -31,6 +33,105 @@ function createWindow() {
     win.loadFile(join(__dirname, '..', 'dist', 'index.html'));
   }
 }
+
+// --- iTunes Library parser ---
+
+function toCamelCase(key) {
+  return key.split(' ').map((word, i) => {
+    const lower = word.toLowerCase();
+    return i === 0 ? lower : lower[0].toUpperCase() + lower.slice(1);
+  }).join('');
+}
+
+function convertTrack(raw) {
+  const track = {};
+  for (const [key, value] of Object.entries(raw)) {
+    track[toCamelCase(key)] = value;
+  }
+  return track;
+}
+
+function convertPlaylist(raw) {
+  const item = {
+    id: raw['Playlist Persistent ID'],
+    name: raw['Name'] ?? '',
+    parentId: raw['Parent Persistent ID'] ?? null,
+  };
+
+  if (raw['Folder'] === true) {
+    item.type = 'folder';
+    item.children = [];
+  } else {
+    item.type = 'playlist';
+    item.trackIds = (raw['Playlist Items'] ?? []).map(t => t['Track ID']);
+  }
+
+  if (raw['Description'])        item.description      = raw['Description'];
+  if (raw['Master'] === true)    item.master           = true;
+  if (raw['Visible'] === false)  item.visible          = false;
+  if (raw['Smart Info'])         item.smart            = true;
+  if (raw['Distinguished Kind'] != null) item.distinguishedKind = raw['Distinguished Kind'];
+
+  return item;
+}
+
+function buildHierarchy(flatItems) {
+  const byId = new Map();
+  flatItems.forEach(item => byId.set(item.id, item));
+
+  const roots = [];
+
+  for (const item of flatItems) {
+    if (item.parentId && byId.has(item.parentId)) {
+      const parent = byId.get(item.parentId);
+      if (!parent.children) parent.children = [];
+      parent.children.push(item);
+    } else {
+      roots.push(item);
+    }
+  }
+
+  const index = {};
+
+  function walk(nodes, pathSoFar) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const currentPath = [...pathSoFar, i];
+      index[node.id] = currentPath;
+      if (node.children) walk(node.children, currentPath);
+    }
+  }
+
+  walk(roots, []);
+
+  return { hierarchy: roots, index };
+}
+
+ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
+  try {
+    const lib = plist.parse(xmlContent);
+
+    const rawTracks = lib['Tracks'] ?? {};
+    const tracks = {};
+    for (const [id, rawTrack] of Object.entries(rawTracks)) {
+      tracks[id] = convertTrack(rawTrack);
+    }
+
+    const rawPlaylists = lib['Playlists'] ?? [];
+    const flatItems = rawPlaylists.map(convertPlaylist);
+    const { hierarchy, index } = buildHierarchy(flatItems);
+
+    const output = { tracks, hierarchy, index };
+
+    const publicDir = resolve(__dirname, '..', 'public');
+    mkdirSync(publicDir, { recursive: true });
+    writeFileSync(resolve(publicDir, 'library.json'), JSON.stringify(output));
+
+    return { success: true, data: output };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
 
 app.whenReady().then(createWindow);
 

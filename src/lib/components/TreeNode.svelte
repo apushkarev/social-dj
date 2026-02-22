@@ -69,7 +69,7 @@
     height: 28px;
     border: none;
     background: none;
-    color: var(--fg3);
+    color: var(--fg2);
     font-family: inherit;
     font-size: 14px;
     font-weight: 400;
@@ -86,8 +86,8 @@
   }
 
   .node-row.folder {
-    color: var(--fg4);
-    font-weight: 500;
+    color: var(--fg2);
+    font-weight: 600;
   }
 
   .arrow {
@@ -99,7 +99,7 @@
     flex-shrink: 0;
     transform: rotate(-180deg);
     transition: transform var(--td-250);
-    color: var(--fg3);
+    color: var(--fg2);
   }
 
   .arrow.open {
@@ -111,7 +111,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--fg3);
+    color: var(--fg2);
   }
 
   .label {

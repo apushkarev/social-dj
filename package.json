@@ -11,6 +11,7 @@
     "electron:dev": "concurrently \"vite --port 5173\" \"wait-on http://localhost:5173 && electron .\""
   },
   "dependencies": {
+    "plist": "^3.1.0",
     "svelte": "^5.0.0"
   },
   "devDependencies": {

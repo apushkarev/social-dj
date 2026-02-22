@@ -97,6 +97,11 @@ export const ds = {
   '--td-1250': '1250ms',
   '--td-1500': '1500ms',
   '--td-2000': '2000ms',
+
+  '--brad1': '6px',
+  '--brad2': '10px',
+  '--brad3': '16px',
+  '--brad4': '22px',
 };
 
 export const initializeDesignSystem = () => {

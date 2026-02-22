@@ -29,4 +29,9 @@ export const treeState = {
     openFolders = new Set(openFolders);
     saveToStorage(openFolders);
   },
+
+  reset() {
+    openFolders = new Set();
+    saveToStorage(openFolders);
+  },
 };
