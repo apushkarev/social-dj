@@ -1,6 +1,7 @@
 <script>
   import { globals } from '../globals.svelte.js';
   import { treeState } from '../tree-state.svelte.js';
+  import Button from './Button.svelte';
 
   let { show } = $props();
 
@@ -69,9 +70,7 @@
       <h2 class="subheading">Library management</h2>
 
       <div class="import-block">
-        <button class="import-btn" onclick={() => fileInput.click()}>
-          Import iTunes Library
-        </button>
+        <Button onclick={() => fileInput.click()}>Import iTunes Library</Button>
 
         <p class="hint">
           iTunes Library can be exported in File → Library → Export Library
@@ -117,8 +116,8 @@
   }
 
   .settings-inner {
-    padding: 48px;
-    max-width: 600px;
+    padding: 3em;
+    max-width: 37.5em;
   }
 
   .heading {
@@ -145,29 +144,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.75em;
-  }
-
-  .import-btn {
-    align-self: flex-start;
-    padding: 0.5em 1em;
-    box-sizing: border-box;
-    background: var(--overlay1);
-    border: 1px solid var(--border1-5);
-    border-radius: var(--brad1);
-    color: var(--fg2-5);
-    font-size: 1em;
-    cursor: pointer;
-    transition: background var(--td-100), border-color var(--td-100), color var(--td-100);
-  }
-
-  .import-btn:hover {
-    background: var(--overlay2);
-    border-color: var(--border2);
-    color: var(--fg5);
-  }
-
-  .import-btn:active {
-    background: var(--overlay1);
   }
 
   .hint {
