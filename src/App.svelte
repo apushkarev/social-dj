@@ -24,9 +24,8 @@
   function handleTreeWidth(newWidth) {
     // Always wait for the 200ms slide transition to finish before resizing,
     // whether opening (grow) or closing (shrink).
-    clearTimeout(_widthTimer);
 
-    _widthTimer = setTimeout(() => { treeWidth = newWidth; }, 500);
+    treeWidth = newWidth;
   }
 </script>
 
