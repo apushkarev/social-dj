@@ -47,6 +47,10 @@
     border-right: 1px solid var(--border2);
     display: flex;
     flex-direction: column;
+
+    position: relative;
+    z-index: 1;
+    background-color: var(--bg1);
   }
 
   .sidebar-item {
