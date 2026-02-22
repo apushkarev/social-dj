@@ -93,7 +93,6 @@
   .playlist-header {
     flex-shrink: 0;
     padding: 1em 2em 0.875em;
-    margin-bottom: 1em;
     border-bottom: 1px solid var(--border2);
   }
 
@@ -129,17 +128,20 @@
     position: sticky;
     top: 0;
     z-index: 1;
-    background: var(--bg1);
+    background: transparent;
     font-size: 0.75em;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--fg1);
 
-    padding-bottom: 1em;
+    padding: 1.5em 0;
     box-sizing: border-box;
 
     gap: 1.333em;
+
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border2);
   }
 
   .data-row {
@@ -183,11 +185,11 @@
   }
 
   .col-title {
-    width: 20rem;
+    width: 16rem;
   }
 
   .header-row .col-title {
-    width: 19.2rem;
+    width: 15.1rem;
   }
 
   .col-time {
@@ -201,7 +203,7 @@
   }
 
   .col-artist {
-    width: 20rem;
+    width: 16rem;
   }
 
   .col-comments {
