@@ -2,6 +2,7 @@
   import { slide } from 'svelte/transition';
   import { icons } from '../icons.js';
   import { treeState } from '../tree-state.svelte.js';
+  import { globals } from '../globals.svelte.js';
   import TreeNode from './TreeNode.svelte';
 
   let {
@@ -12,10 +13,13 @@
   let isFolder = $derived(node.type === 'folder');
   let isOpen = $derived(isFolder && treeState.isOpen(node.id));
   let hasChildren = $derived(isFolder && node.children && node.children.length > 0);
+  let isSelected = $derived(!isFolder && globals.get('selectedPlaylistId') === node.id);
 
-  function toggle() {
+  function handleClick() {
     if (isFolder) {
       treeState.toggle(node.id);
+    } else {
+      globals.set('selectedPlaylistId', node.id);
     }
   }
 </script>
@@ -25,9 +29,10 @@
     class="node-row"
     class:folder={isFolder}
     class:playlist={!isFolder}
+    class:selected={isSelected}
     data-snap-row
     style="padding-left: {12 + depth * 20}px"
-    onclick={toggle}
+    onclick={handleClick}
   >
     {#if isFolder}
       <span class="arrow" class:open={isOpen}>
@@ -85,6 +90,15 @@
     background-color: var(--overlay1);
   }
 
+  .node-row.selected {
+    background-color: var(--yellow-warm-80);
+    color: var(--black4);
+  }
+
+  .node-row.selected:hover {
+    background-color: var(--yellow-warm-80);
+  }
+
   .node-row.folder {
     color: var(--fg2);
     font-weight: 600;
@@ -114,10 +128,18 @@
     color: var(--fg2);
   }
 
+  .selected .icon, .selected .arrow {
+    color: var(--black4);
+  }
+
   .label {
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+  }
+
+  .selected .label {
+    font-weight: 600;
   }
 
   .children {

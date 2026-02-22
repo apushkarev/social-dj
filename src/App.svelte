@@ -2,6 +2,7 @@
   import LibraryTree from './lib/components/LibraryTree.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
   import Settings from './lib/components/Settings.svelte';
+  import PlaylistView from './lib/components/PlaylistView.svelte';
 
   const stored = localStorage.getItem('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
@@ -26,6 +27,7 @@
     </div>
   </div>
   <main class="content">
+    <PlaylistView />
     <Settings show={selectedItem === 'settings'} />
   </main>
 </div>

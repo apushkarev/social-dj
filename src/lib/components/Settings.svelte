@@ -42,6 +42,7 @@
 
       if (result.success) {
         treeState.reset();
+        globals.set('selectedPlaylistId', null);
         globals.set('library', result.data);
         status = 'success';
       } else {
