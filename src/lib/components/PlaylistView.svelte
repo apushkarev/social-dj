@@ -78,6 +78,7 @@
       <div class="track-row header-row">
         <div class="col col-num">#</div>
         <div class="col col-tag">Tag</div>
+        <div class="col col-bpm">BPM</div>
         <div class="col col-title">Title</div>
         <div class="col col-time">Time</div>
         <div class="col col-artist">Artist</div>
@@ -94,6 +95,7 @@
           <div class="col col-tag">
             <ColorTag trackId={track.trackId} onopen={handleTagClick} />
           </div>
+          <div class="col col-bpm">{track.bpm ?? '—'}</div>
           <div class="col col-title">{track.name ?? '—'}</div>
           <div class="col col-time">{formatTime(track.totalTime)}</div>
           <div class="col col-artist">{track.artist ?? '—'}</div>
@@ -218,6 +220,12 @@
     width: 2rem;
     display: flex;
     align-items: center;
+  }
+
+  .col-bpm {
+    width: 3rem;
+    text-align: right;
+    color: var(--fg1);
   }
 
   .col-title {
