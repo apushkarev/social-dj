@@ -57,7 +57,7 @@
     width: 400px;
     flex-shrink: 0;
     overflow: hidden;
-    transition: width var(--td-250) ease;
+    transition: width var(--td-350) ease-in-out;
   }
 
   .tree-wrapper.hidden {
@@ -67,7 +67,7 @@
   .tree-slider {
     width: 400px;
     height: 100%;
-    transition: transform var(--td-350) ease;
+    transition: transform var(--td-350) ease-in-out;
   }
 
   .tree-wrapper.hidden .tree-slider {
