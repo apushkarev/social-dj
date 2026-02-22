@@ -32,7 +32,7 @@
   );
 
   let numColWidth = $derived(
-    `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
+    `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1.5}rem`
   );
 
   function formatTime(ms) {
