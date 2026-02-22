@@ -69,19 +69,19 @@ export const ds = {
   '--yellow-warm-25': 'rgb(228 193 68 / 0.25)',
   '--yellow-warm-80': 'rgb(184 145 0)',
   
-  '--yellow-warm-50': 'rgb(128 90 0)',
   '--red-50': 'rgb(127, 38, 22)',
+  '--bristol-orange-50': 'rgb(128, 61, 13)',
+  '--yellow-warm-50': 'rgb(128 90 0)',
+  '--meadow-green-50': 'rgb(84, 128, 13)',
   '--mint-50': 'rgb(13, 128, 120)',
   '--cornflower-blue-50': 'rgb(13, 61, 128)',
-  '--bristol-orange-50': 'rgb(128, 61, 13)',
-  '--meadow-green-50': 'rgb(84, 128, 13)',
 
-  '--yellow-warm': '#e5c345',
   '--red': 'rgb(248, 147, 128)',
+  '--bristol-orange': 'rgb(255, 181, 97)',
+  '--yellow-warm': '#e5c345',
+  '--meadow-green': 'rgb(155, 194, 91)',
   '--mint': 'rgb(39, 194, 184)',
   '--cornflower-blue': 'rgb(102, 150, 217)',
-  '--bristol-orange': 'rgb(255, 181, 97)',
-  '--meadow-green': 'rgb(155, 194, 91)',
 
   /* Timing */
 
