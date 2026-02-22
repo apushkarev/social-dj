@@ -1,18 +1,26 @@
 <script>
   import { icons } from '../icons.js';
 
-  let { treeVisible, ontreeToggle } = $props();
+  let { selectedItem, onselect } = $props();
+
+  const items = [
+    { id: 'tree',         icon: 'sibebarTree',     title: 'Library Tree' },
+    { id: 'competitions', icon: 'sidebarTrophy',   title: 'Competitions' },
+    { id: 'settings',    icon: 'sidebarSettings', title: 'Settings' },
+  ];
 </script>
 
 <nav class="sidebar">
-  <button
-    class="sidebar-item"
-    class:selected={treeVisible}
-    onclick={ontreeToggle}
-    title="Library Tree"
-  >
-    {@html icons.tree}
-  </button>
+  {#each items as item}
+    <button
+      class="sidebar-item"
+      class:selected={selectedItem === item.id}
+      onclick={() => onselect(item.id)}
+      title={item.title}
+    >
+      {@html icons[item.icon]}
+    </button>
+  {/each}
 </nav>
 
 <style>
@@ -35,19 +43,19 @@
     border: none;
     border-left: 2px solid transparent;
     cursor: pointer;
-    color: var(--fg1);
+    color: var(--fg1-s);
     padding: 0;
     transition: color var(--td-100), border-left-color var(--td-100);
   }
 
   .sidebar-item:hover {
-    color: var(--fg3);
-    border-left-color: var(--fg3);
+    color: var(--fg3-s);
+    border-left-color: var(--fg3-s);
   }
 
   .sidebar-item:active {
-    color: var(--fg5);
-    border-left-color: var(--fg5);
+    color: var(--fg5-s);
+    border-left-color: var(--fg5-s);
   }
 
   .sidebar-item.selected {

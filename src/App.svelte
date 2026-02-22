@@ -2,16 +2,23 @@
   import LibraryTree from './lib/components/LibraryTree.svelte';
   import Sidebar from './lib/components/Sidebar.svelte';
 
-  let treeVisible = $state(localStorage.getItem('sidebar-tree-visible') !== 'false');
+  const stored = localStorage.getItem('sidebar-selected-item');
+  let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
+
+  let treeVisible = $derived(selectedItem === 'tree');
 
   $effect(() => {
-    localStorage.setItem('sidebar-tree-visible', treeVisible);
+    localStorage.setItem('sidebar-selected-item', selectedItem ?? 'none');
   });
+
+  function onselect(id) {
+    selectedItem = selectedItem === id ? null : id;
+  }
 </script>
 
 <div class="titlebar"></div>
 <div class="app-layout">
-  <Sidebar {treeVisible} ontreeToggle={() => treeVisible = !treeVisible} />
+  <Sidebar {selectedItem} {onselect} />
   <div class="tree-wrapper" class:hidden={!treeVisible}>
     <div class="tree-slider">
       <LibraryTree />
@@ -46,7 +53,7 @@
     width: 400px;
     flex-shrink: 0;
     overflow: hidden;
-    transition: width var(--td-350) ease;
+    transition: width var(--td-250) ease;
   }
 
   .tree-wrapper.hidden {
