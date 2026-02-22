@@ -50,7 +50,7 @@
   {#if isFolder && isOpen && hasChildren}
     <div
       class="children depth-color-{depth % 6}"
-      style="--guide-left: {20 + depth * 20}px"
+      style="--guide-left: {23 + depth * 20}px"
       transition:slide={{ duration: 200 }}
     >
       {#each node.children as child (child.id)}
@@ -108,8 +108,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
     transform: rotate(-180deg);
     transition: transform var(--td-250);
@@ -159,8 +159,8 @@
   .children:global(.depth-color-0)::before { background-color: var(--red-50); }
   .children:global(.depth-color-1)::before { background-color: var(--bristol-orange-50); }
   .children:global(.depth-color-2)::before { background-color: var(--yellow-warm-50); }
-  .children:global(.depth-color-3)::before { background-color: var(--mint-50); }
-  .children:global(.depth-color-4)::before { background-color: var(--meadow-green-50); }
+  .children:global(.depth-color-3)::before { background-color: var(--meadow-green-50); }
+  .children:global(.depth-color-4)::before { background-color: var(--mint-50); }
   .children:global(.depth-color-5)::before { background-color: var(--cornflower-blue-50); }
 
 </style>
