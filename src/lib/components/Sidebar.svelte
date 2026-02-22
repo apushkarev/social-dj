@@ -3,15 +3,31 @@
 
   let { selectedItem, onselect } = $props();
 
-  const items = [
-    { id: 'tree',         icon: 'sibebarTree',     title: 'Library Tree' },
-    { id: 'competitions', icon: 'sidebarTrophy',   title: 'Competitions' },
-    { id: 'settings',    icon: 'sidebarSettings', title: 'Settings' },
+  const topItems = [
+    { id: 'tree',         icon: 'sibebarTree',   title: 'Library Tree' },
+    { id: 'competitions', icon: 'sidebarTrophy', title: 'Competitions' },
+  ];
+
+  const bottomItems = [
+    { id: 'settings', icon: 'sidebarSettings', title: 'Settings' },
   ];
 </script>
 
 <nav class="sidebar">
-  {#each items as item}
+  {#each topItems as item}
+    <button
+      class="sidebar-item"
+      class:selected={selectedItem === item.id}
+      onclick={() => onselect(item.id)}
+      title={item.title}
+    >
+      {@html icons[item.icon]}
+    </button>
+  {/each}
+
+  <div class="spacer"></div>
+
+  {#each bottomItems as item}
     <button
       class="sidebar-item"
       class:selected={selectedItem === item.id}
@@ -71,5 +87,9 @@
   .sidebar-item.selected:hover {
     color: var(--yellow-warm);
     border-left-color: var(--yellow-warm);
+  }
+
+  .spacer {
+    flex: 1;
   }
 </style>
