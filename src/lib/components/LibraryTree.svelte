@@ -1,9 +1,55 @@
 <script>
   import { globals } from '../globals.svelte.js';
+  import { treeState } from '../tree-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
+
+  let { onwidthchange = undefined } = $props();
 
   let library = $derived(globals.get('library'));
   let hierarchy = $derived(library ? library.hierarchy : []);
+
+  // Icon/layout constants matching TreeNode.svelte
+  const ARROW_W = 16;  // arrowLeft SVG width
+  const ICON_W  = 18;  // folder / playlist SVG width
+  const GAP     = 6;   // flex gap inside .node-row
+  const PAD_R   = 12;  // padding-right on .node-row
+  const EXTRA   = 16;  // 2em safety margin requested by formula
+  const MIN_W   = 200;
+
+  let _measureCtx = null;
+  function getMeasureCtx() {
+    if (!_measureCtx) {
+      _measureCtx = document.createElement('canvas').getContext('2d');
+    }
+    return _measureCtx;
+  }
+
+  function calcNodeWidth(node, depth) {
+    const ctx      = getMeasureCtx();
+    const padLeft  = 12 + depth * 20;
+    const isFolder = node.type === 'folder';
+    ctx.font       = `${isFolder ? 600 : 500} 14px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+    const textW    = ctx.measureText(node.name).width;
+    const icons    = isFolder
+      ? ARROW_W + GAP + ICON_W + GAP   // arrow + gap + icon + gap
+      : ICON_W + GAP;                  // icon + gap
+    let maxW = padLeft + icons + textW + PAD_R;
+    if (isFolder && treeState.isOpen(node.id) && node.children?.length) {
+      for (const child of node.children) {
+        maxW = Math.max(maxW, calcNodeWidth(child, depth + 1));
+      }
+    }
+    return maxW;
+  }
+
+  $effect(() => {
+    if (!hierarchy.length || !onwidthchange) return;
+    let maxW = MIN_W;
+    for (const node of hierarchy) {
+      maxW = Math.max(maxW, calcNodeWidth(node, 0));
+    }
+    onwidthchange(Math.ceil(maxW) + EXTRA);
+  });
 
   let scrollEl;
   let stopTimeout;
@@ -140,7 +186,7 @@
 
 <style>
   .library-tree {
-    width: 400px;
+    width: 100%;
     height: 100%;
     flex-shrink: 0;
     border-right: 1px solid var(--border2);

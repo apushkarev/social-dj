@@ -16,14 +16,30 @@
   function onselect(id) {
     selectedItem = selectedItem === id ? null : id;
   }
+
+  // Auto tree width
+  let treeWidth = $state(400);
+  let _widthTimer;
+
+  function handleTreeWidth(newWidth) {
+    // Always wait for the 200ms slide transition to finish before resizing,
+    // whether opening (grow) or closing (shrink).
+    clearTimeout(_widthTimer);
+
+    _widthTimer = setTimeout(() => { treeWidth = newWidth; }, 500);
+  }
 </script>
 
 <div class="titlebar"></div>
 <div class="app-layout">
   <Sidebar {selectedItem} {onselect} />
-  <div class="tree-wrapper" class:hidden={!treeVisible}>
+  <div
+    class="tree-wrapper"
+    class:hidden={!treeVisible}
+    style:width={treeVisible ? `${treeWidth}px` : ''}
+  >
     <div class="tree-slider">
-      <LibraryTree />
+      <LibraryTree onwidthchange={handleTreeWidth} />
     </div>
   </div>
   <main class="content">
@@ -54,10 +70,11 @@
   }
 
   .tree-wrapper {
-    width: 400px;
+    /* width is set via inline style:width when visible; .hidden overrides to 0.
+       Setting it directly (not via CSS var) ensures the CSS transition fires. */
     flex-shrink: 0;
     overflow: hidden;
-    transition: width var(--td-350) ease-in-out;
+    transition: width var(--td-150) ease-in-out;
   }
 
   .tree-wrapper.hidden {
@@ -65,9 +82,8 @@
   }
 
   .tree-slider {
-    width: 400px;
     height: 100%;
-    transition: transform var(--td-350) ease-in-out;
+    width: 100$;
   }
 
   .tree-wrapper.hidden .tree-slider {

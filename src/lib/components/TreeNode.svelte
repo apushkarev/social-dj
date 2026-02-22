@@ -7,7 +7,7 @@
 
   let {
     node,
-    depth = 0,
+    depth = 0
   } = $props();
 
   let isFolder = $derived(node.type === 'folder');
