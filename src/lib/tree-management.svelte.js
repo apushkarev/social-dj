@@ -65,7 +65,7 @@ export async function deleteTreeItem(nodeId) {
     parent = parent.children[path[i]];
   }
   parent.children.splice(path[path.length - 1], 1);
-  _t = t();
+  let _t = t();
   tLog('[lib] delete item from hierarchy', _t);
 
   _t = t();
@@ -121,6 +121,71 @@ export async function renameTreeItem(nodeId, newName) {
     index: indexSnapshot,
   });
   tLog('[lib] save hierarchy.json after rename', _t);
+}
+
+// Removes trackIds from a playlist node. Persists hierarchy.json.
+export function removeTracksFromPlaylist(playlistId, trackIds) {
+  const library = globals.get('library');
+  const path = $state.snapshot(library.index)[playlistId];
+  if (!path) return;
+
+  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
+  let node = { children: newHierarchy };
+  for (const i of path) {
+    node = node.children[i];
+  }
+
+  if (node.type !== 'playlist') return;
+
+  const toRemove = new Set(trackIds.map(String));
+  node.trackIds = node.trackIds.filter(id => !toRemove.has(String(id)));
+
+  const indexSnapshot = $state.snapshot(library.index);
+
+  globals.set('library', {
+    tracks: library.tracks,
+    hierarchy: newHierarchy,
+    index: indexSnapshot,
+  });
+
+  window.electronAPI.saveHierarchy({
+    hierarchy: newHierarchy,
+    index: indexSnapshot,
+  });
+}
+
+// Appends unique trackIds to a playlist node. Persists hierarchy.json.
+export function addTracksToPlaylist(playlistId, trackIds) {
+  const library = globals.get('library');
+  const path = $state.snapshot(library.index)[playlistId];
+  if (!path) return;
+
+  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
+  let node = { children: newHierarchy };
+  for (const i of path) {
+    node = node.children[i];
+  }
+
+  if (node.type !== 'playlist') return;
+
+  const existing = new Set(node.trackIds.map(String));
+  const toAdd = trackIds.filter(id => !existing.has(String(id)));
+  if (!toAdd.length) return;
+
+  node.trackIds = [...node.trackIds, ...toAdd];
+
+  const indexSnapshot = $state.snapshot(library.index);
+
+  globals.set('library', {
+    tracks: library.tracks,
+    hierarchy: newHierarchy,
+    index: indexSnapshot,
+  });
+
+  window.electronAPI.saveHierarchy({
+    hierarchy: newHierarchy,
+    index: indexSnapshot,
+  });
 }
 
 // Updates globals.library and persists library.json.

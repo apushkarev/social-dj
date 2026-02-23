@@ -8,7 +8,8 @@
   import AddTreeItem from './AddTreeItem.svelte';
   import RenameTreeItem from './RenameTreeItem.svelte';
   import { contextMenu } from '../context-menu.svelte.js';
-  import { deleteTreeItem } from '../tree-management.svelte.js';
+  import { deleteTreeItem, addTracksToPlaylist } from '../tree-management.svelte.js';
+  import { dragStore } from '../drag-state.svelte.js';
 
   let {
     node,
@@ -47,6 +48,43 @@
   let showRenameModal = $state(false);
   let contextX = $state(0);
   let contextY = $state(0);
+
+  let isDragOver = $state(false);
+
+  function handleDragOver(e) {
+    if (!dragStore.isDragging || dragStore.sourcePlaylistId === node.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    isDragOver = true;
+  }
+
+  function handleDragLeave(e) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    isDragOver = false;
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    const ids = dragStore.trackIds;
+    if (!ids.length) return;
+
+    // Flash: on (already showing) → off → on → off + commit
+    isDragOver = false;
+
+    setTimeout(() => {
+
+      isDragOver = true;
+
+      setTimeout(() => {
+
+        isDragOver = false;
+
+        setTimeout(() => {
+          addTracksToPlaylist(node.id, ids);
+        }, 100)
+      }, 100);
+    }, 100);
+  }
 
   function handleContextMenu(e) {
     e.preventDefault();
@@ -126,10 +164,14 @@
     class:folder={isFolder}
     class:playlist={!isFolder}
     class:selected={isSelected}
+    class:drag-over={isDragOver}
     data-snap-row
     style="padding-left: {12 + depth * 20}px"
     onclick={handleClick}
     oncontextmenu={handleContextMenu}
+    ondragover={!isFolder ? handleDragOver : undefined}
+    ondragleave={!isFolder ? handleDragLeave : undefined}
+    ondrop={!isFolder ? handleDrop : undefined}
   >
     {#if isFolder}
       <span class="arrow" class:open={isOpen}>
@@ -222,6 +264,12 @@
   .node-row.selected:hover, .node-row.folder.selected:hover {
     background-color: var(--yellow-warm-80);
     color: var(--black6);
+  }
+
+  .node-row.drag-over {
+    outline: 2px solid var(--meadow-green);
+    outline-offset: -2px;
+    border-radius: var(--brad1);
   }
 
   .node-row.folder {

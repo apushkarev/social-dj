@@ -1,6 +1,10 @@
 <script>
   import { globals } from '../globals.svelte.js';
   import { colorTags } from '../color-tags.svelte.js';
+  import { dragStore } from '../drag-state.svelte.js';
+  import { removeTracksFromPlaylist } from '../tree-management.svelte.js';
+  import { contextMenu } from '../context-menu.svelte.js';
+  import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
 
   let library            = $derived(globals.get('library'));
@@ -175,6 +179,114 @@
     tooltipComment = null;
   }
 
+  function createDragGhost(count) {
+    const cs = getComputedStyle(document.documentElement);
+    const bg2 = cs.getPropertyValue('--bg2').trim();
+    const border3 = cs.getPropertyValue('--border3').trim();
+    const fg2s = cs.getPropertyValue('--fg2-s').trim();
+    const yellow = cs.getPropertyValue('--yellow-warm').trim();
+
+    const orderOfMagnitude = Math.floor(Math.log10(count));
+    const badgeSize = orderOfMagnitude * 4 + 24;
+    const badgeOffset = -10 - orderOfMagnitude * 2;
+
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'position: fixed',
+      'top: -1000px',
+      'left: -1000px',
+      'display: flex',
+      'align-items: center',
+      'padding: 20px 24px',
+      `background: ${bg2}`,
+      `border: 1px solid ${border3}`,
+      'border-radius: 8px',
+      `color: ${fg2s}`,
+      'font-family: inherit',
+      'font-size: 15px',
+      'box-shadow: 0 4px 16px rgba(0,0,0,0.5)',
+      'pointer-events: none',
+      'white-space: nowrap',
+    ].join(';');
+
+    el.innerHTML = `
+      <span
+        style="
+          display: flex;
+          align-items: center;
+          scale: 3;
+        "
+      >${icons.playlistBig}</span>
+      <span
+        style="
+          position: absolute;
+
+          top: ${badgeOffset}px;
+          right: ${badgeOffset}px;
+
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: ${yellow};
+          color: #1a1a1a;
+          border-radius: 50%;
+          padding: 1px 8px;
+          font-size: 16px;
+          font-weight: 700;
+          min-width: ${badgeSize}px;
+          width: ${badgeSize}px;
+          height: ${badgeSize}px;
+        ">${count}</span>
+    `;
+
+    return el;
+  }
+
+  function handleDragStart(e, track) {
+    const ids = selectedTrackIds.has(track.trackId)
+      ? [...selectedTrackIds]
+      : [track.trackId];
+
+    dragStore.start(ids, selectedPlaylistId ?? null);
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('text/plain', JSON.stringify(ids));
+
+    const ghost = createDragGhost(ids.length);
+    document.body.appendChild(ghost);
+    const ghostH = ghost.getBoundingClientRect().height;
+    e.dataTransfer.setDragImage(ghost, -12, ghostH + 12);
+    requestAnimationFrame(() => {
+      if (document.body.contains(ghost)) document.body.removeChild(ghost);
+    });
+  }
+
+  function handleDragEnd() {
+    dragStore.end();
+  }
+
+  function handleTrackContextMenu(e, track) {
+    if (!selectedPlaylistId) return;
+    e.preventDefault();
+
+    const ids = selectedTrackIds.has(track.trackId)
+      ? [...selectedTrackIds]
+      : [track.trackId];
+
+    const idsSet = new Set(ids.map(String));
+
+    contextMenu.show(e.clientX, e.clientY, [
+      {
+        icon: 'trash',
+        text: 'Delete from playlist',
+        callback: () => {
+          removeTracksFromPlaylist(selectedPlaylistId, ids);
+          selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
+          if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+        },
+      },
+    ]);
+  }
+
   function formatTime(ms) {
 
     if (!ms) return '—';
@@ -207,10 +319,16 @@
       </div>
 
       {#each tracks as track, i (track.trackId)}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="track-row data-row"
           class:selected={selectedTrackIds.has(track.trackId)}
+          draggable="true"
           onclick={(e) => handleRowClick(e, track.trackId)}
+          oncontextmenu={(e) => handleTrackContextMenu(e, track)}
+          ondragstart={(e) => handleDragStart(e, track)}
+          ondragend={handleDragEnd}
         >
           <div class="col col-num">{i + 1}</div>
           <div class="col col-tag">
