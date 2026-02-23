@@ -12,3 +12,5 @@ dist.zip
 app-state.json
 library.json
 library copy.json
+public/library/tracks.json
+public/library/hierarchy.json
