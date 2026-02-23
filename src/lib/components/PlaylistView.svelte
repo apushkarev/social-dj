@@ -88,13 +88,49 @@
     return node;
   }
 
+  // Returns an array of node names from root down to nodeId.
+  function getBreadcrumbPath(lib, nodeId) {
+    if (!lib?.index || !nodeId) return null;
+    const path = lib.index[nodeId];
+    if (!path) return null;
+    const names = [];
+    let node = { children: lib.hierarchy };
+    for (const i of path) {
+      node = node.children[i];
+      if (!node) return null;
+      names.push(node.name);
+    }
+    return names;
+  }
+
+  // Shows last 3 nodes; prefixes with '... / ' when path is deeper.
+  function formatBreadcrumb(names) {
+
+    const branchSteps = 4;
+
+    if (!names || names.length === 0) return null;
+    if (names.length <= branchSteps) return names.join(' / ');
+    return '... / ' + names.slice(-branchSteps).join(' / ');
+  }
+
+  function calcDisplayName() {
+    if (selectedFolderView) {
+      const names = getBreadcrumbPath(library, selectedFolderView.id);
+      if (names) return formatBreadcrumb(names);
+      return selectedFolderView.name;
+    }
+    if (playlist?.type === 'playlist') {
+      const names = getBreadcrumbPath(library, selectedPlaylistId);
+      if (names) return formatBreadcrumb(names);
+      return playlist.name;
+    }
+    return null;
+  }
+
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
 
   // Effective view: folder aggregation takes priority over single playlist
-  let displayName = $derived(
-    selectedFolderView?.name
-    ?? (playlist?.type === 'playlist' ? playlist.name : null)
-  );
+  let displayName = $derived(calcDisplayName());
 
   let activeTrackIds = $derived(
     selectedFolderView?.trackIds

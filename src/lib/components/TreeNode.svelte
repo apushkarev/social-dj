@@ -37,6 +37,7 @@
       if (e.altKey) {
         globals.set('selectedPlaylistId', null);
         globals.set('selectedFolderView', {
+          id: node.id,
           name: node.name,
           trackIds: collectFolderTrackIds(node),
         });
