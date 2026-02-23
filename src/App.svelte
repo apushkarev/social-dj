@@ -10,6 +10,7 @@
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
 
   let treeVisible = $derived(selectedItem === 'tree');
+  let prevTreeVisible = $state(true);
 
   let sliderEl = $state();
 
@@ -23,7 +24,7 @@
   }
 
   // Auto tree width
-  const storedWidth = globals.get('tree-width');
+  const storedWidth = $derived(globals.get('tree-width'));
   let treeWidth = $state(storedWidth ? parseInt(String(storedWidth), 10) : 400);
 
   function handleTreeWidth(newWidth) {
@@ -38,6 +39,20 @@
       saveAppState();
     })
   }
+
+  $effect(() => {
+
+    if (prevTreeVisible == treeVisible) return;
+
+    if (!treeVisible) {
+      setTimeout(() => treeWidth = 0, 0);
+    }
+
+    if (treeVisible) treeWidth = storedWidth;
+
+    prevTreeVisible = treeVisible;
+  });
+
 </script>
 
 <div class="titlebar"></div>
@@ -89,6 +104,7 @@
        Setting it directly (not via CSS var) ensures the CSS transition fires. */
     flex-shrink: 0;
     overflow: hidden;
+    
     transition: width var(--td-250) ease-in-out, transform var(--td-250) ease-in-out;
   }
 
