@@ -113,6 +113,7 @@
   <AddTreeItem
     type={modalType}
     parentFolderId={node.id}
+    parentFolderName={node.name}
     x={modalX}
     y={modalY}
     bind:visible={showModal}

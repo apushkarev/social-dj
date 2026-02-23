@@ -9,6 +9,7 @@
   let {
     type,               // 'playlist' | 'folder'
     parentFolderId,
+    parentFolderName,
     x,
     y,
     visible = $bindable(false),
@@ -16,6 +17,7 @@
   } = $props();
 
   let itemName = $state('');
+
   let inputEl = $state();
 
   $effect(() => {
@@ -24,7 +26,7 @@
     }
   });
 
-  const title = $derived(type === 'folder' ? 'Add folder' : 'Add playlist');
+  const title = $derived(type === 'folder' ? 'Add folder to' : 'Add playlist to');
 
   function cancel() {
     itemName = '';
@@ -145,7 +147,11 @@
 </script>
 
 <Modal {x} {y} bind:visible {onclose}>
+
   <p class="modal-title">{title}</p>
+  <p class="modal-title">{parentFolderName}</p>
+
+  <div class="vGap3"></div>
 
   <InputField
     bind:value={itemName}
@@ -153,6 +159,8 @@
     placeholder="Name"
     onkeydown={handleKeydown}
   />
+
+  <div class="vGap3"></div>
 
   <div class="modal-actions">
     <Button onclick={cancel}>Cancel</Button>

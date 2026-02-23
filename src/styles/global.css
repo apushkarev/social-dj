@@ -44,3 +44,23 @@ body {
 .icon svg, .arrow svg {
   scale: 1.5;
 }
+
+.vGap1 {
+  height: 0.25em;
+  min-height: 0.25em;
+}
+
+.vGap2 {
+  height: 0.5em;
+  min-height: 0.5em;
+}
+
+.vGap3 {
+  height: 0.75em;
+  min-height: 0.75em;
+}
+
+.vGap4 {
+  height: 1em;
+  min-height: 1em;
+}
