@@ -56,13 +56,19 @@ export async function deleteTreeItem(nodeId) {
   if (!path) return;
 
   let _t = t();
-  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
+  const newHierarchy = $state.snapshot(library.hierarchy);
+  tLog('[lib] delete item from hierarchy 1', _t);
+
   let parent = { children: newHierarchy };
+
   for (let i = 0; i < path.length - 1; i++) {
     parent = parent.children[path[i]];
   }
+  _t = t();
+  tLog('[lib] delete item from hierarchy 2', _t);
   parent.children.splice(path[path.length - 1], 1);
-  tLog('[lib] delete item from hierarchy', _t);
+  _t = t();
+  tLog('[lib] delete item from hierarchy 3', _t);
 
   _t = t();
   const newIndex = rebuildIndex(newHierarchy);
@@ -75,12 +81,11 @@ export async function deleteTreeItem(nodeId) {
   });
 
   _t = t();
-  await window.electronAPI.saveLibrary({
-    tracks: $state.snapshot(library.tracks),
+  window.electronAPI.saveHierarchy({
     hierarchy: newHierarchy,
     index: newIndex,
   });
-  tLog('[lib] save library.json after delete', _t);
+  tLog('[lib] save hierarchy.json after delete', _t);
 }
 
 // Renames the node with nodeId. Index paths are unaffected by name changes.
@@ -113,12 +118,11 @@ export async function renameTreeItem(nodeId, newName) {
   }
 
   _t = t();
-  await window.electronAPI.saveLibrary({
-    tracks: $state.snapshot(library.tracks),
+  window.electronAPI.saveHierarchy({
     hierarchy: newHierarchy,
     index: indexSnapshot,
   });
-  tLog('[lib] save library.json after rename', _t);
+  tLog('[lib] save hierarchy.json after rename', _t);
 }
 
 // Updates globals.library and persists library.json.
@@ -146,12 +150,11 @@ export async function createTreeItem(parentFolderId, type, name) {
   });
 
   const _t = t();
-  await window.electronAPI.saveLibrary({
-    tracks: $state.snapshot(library.tracks),
+  window.electronAPI.saveHierarchy({
     hierarchy: newHierarchy,
     index: newIndex,
   });
-  tLog('[lib] save library.json', _t);
+  tLog('[lib] save hierarchy.json', _t);
 
   return { newId, newHierarchy, newIndex };
 }

@@ -107,11 +107,11 @@ function buildHierarchy(flatItems) {
   return { hierarchy: roots, index };
 }
 
-ipcMain.handle('save-library', (_event, data) => {
+ipcMain.handle('save-hierarchy', (_event, data) => {
   try {
-    const publicDir = resolve(__dirname, '..', 'public');
-    mkdirSync(publicDir, { recursive: true });
-    writeFileSync(resolve(publicDir, 'library.json'), JSON.stringify(data, null, 2));
+    const libraryDir = resolve(__dirname, '..', 'public', 'library');
+    mkdirSync(libraryDir, { recursive: true });
+    writeFileSync(resolve(libraryDir, 'hierarchy.json'), JSON.stringify(data, null, 2));
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
@@ -140,13 +140,12 @@ ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
     const flatItems = rawPlaylists.map(convertPlaylist);
     const { hierarchy, index } = buildHierarchy(flatItems);
 
-    const output = { tracks, hierarchy, index };
+    const libraryDir = resolve(__dirname, '..', 'public', 'library');
+    mkdirSync(libraryDir, { recursive: true });
+    writeFileSync(resolve(libraryDir, 'tracks.json'), JSON.stringify({ tracks }));
+    writeFileSync(resolve(libraryDir, 'hierarchy.json'), JSON.stringify({ hierarchy, index }));
 
-    const publicDir = resolve(__dirname, '..', 'public');
-    mkdirSync(publicDir, { recursive: true });
-    writeFileSync(resolve(publicDir, 'library.json'), JSON.stringify(output));
-
-    return { success: true, data: output };
+    return { success: true, data: { tracks, hierarchy, index } };
   } catch (err) {
     return { success: false, error: err.message };
   }

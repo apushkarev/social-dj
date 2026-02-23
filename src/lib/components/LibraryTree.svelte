@@ -94,9 +94,13 @@
   const SNAP_DELAY = 75;
 
   async function loadLibrary() {
-    const res = await fetch('/library.json');
-    const data = await res.json();
-    globals.set('library', data);
+    const [tracksRes, hierarchyRes] = await Promise.all([
+      fetch('/library/tracks.json'),
+      fetch('/library/hierarchy.json'),
+    ]);
+    const { tracks } = await tracksRes.json();
+    const { hierarchy, index } = await hierarchyRes.json();
+    globals.set('library', { tracks, hierarchy, index });
   }
 
   $effect(() => {
