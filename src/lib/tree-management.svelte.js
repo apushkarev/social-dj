@@ -55,20 +55,18 @@ export async function deleteTreeItem(nodeId) {
   const path = $state.snapshot(library.index)[nodeId];
   if (!path) return;
 
-  let _t = t();
+
+  // this takes about 180-200ms
   const newHierarchy = $state.snapshot(library.hierarchy);
-  tLog('[lib] delete item from hierarchy 1', _t);
 
   let parent = { children: newHierarchy };
 
   for (let i = 0; i < path.length - 1; i++) {
     parent = parent.children[path[i]];
   }
-  _t = t();
-  tLog('[lib] delete item from hierarchy 2', _t);
   parent.children.splice(path[path.length - 1], 1);
   _t = t();
-  tLog('[lib] delete item from hierarchy 3', _t);
+  tLog('[lib] delete item from hierarchy', _t);
 
   _t = t();
   const newIndex = rebuildIndex(newHierarchy);
