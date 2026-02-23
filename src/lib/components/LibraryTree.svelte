@@ -14,7 +14,7 @@
   const ICON_W  = 18;  // folder / playlist SVG width
   const GAP     = 6;   // flex gap inside .node-row
   const PAD_R   = 12;  // padding-right on .node-row
-  const EXTRA   = 16;  // 2em safety margin requested by formula
+  const EXTRA   = 64;  // 2em safety margin requested by formula
   const MIN_W   = 200;
 
   let _measureCtx = null;
