@@ -114,6 +114,28 @@ export function addTracksToPlaylist(playlistId, trackIds) {
   saveHierarchy();
 }
 
+// Moves nodeId to root level of the hierarchy.
+export function moveTreeNodeToRoot(nodeId) {
+  const library = globals.get('library');
+  const nodePath = library.index[nodeId];
+  if (!nodePath || nodePath.length === 1) return; // already at root
+
+  globals.update('library', current => {
+    let sourceParent = { children: current.hierarchy };
+    for (let i = 0; i < nodePath.length - 1; i++) {
+      sourceParent = sourceParent.children[nodePath[i]];
+    }
+    const [movedNode] = sourceParent.children.splice(nodePath[nodePath.length - 1], 1);
+    movedNode.parentId = null;
+    current.hierarchy.push(movedNode);
+    current.hierarchy.sort((a, b) => a.name.localeCompare(b.name));
+    current.index = rebuildIndex(current.hierarchy);
+    return current;
+  });
+
+  saveHierarchy();
+}
+
 // Moves nodeId into targetFolderId. Blocks self-drop and circular moves.
 export function moveTreeNode(nodeId, targetFolderId) {
   if (nodeId === targetFolderId) return;

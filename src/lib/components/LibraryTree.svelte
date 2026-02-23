@@ -3,6 +3,8 @@
   import { treeState } from '../tree-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
   import { saveAppState } from '../app-state.svelte.js';
+  import { dragStore } from '../drag-state.svelte.js';
+  import { moveTreeNodeToRoot } from '../tree-management.svelte.js';
 
   let { onwidthchange = undefined } = $props();
 
@@ -66,6 +68,35 @@
 
   let scrollEl = $state(null);
   let stopTimeout = $state(null);
+
+  // Root-level drop target
+  let isRootDragOver = $state(false);
+  let _rootDragTimer = null;
+
+  function handleScrollDragOver(e) {
+    if (!dragStore.draggingNodeId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    isRootDragOver = true;
+    clearTimeout(_rootDragTimer);
+    _rootDragTimer = setTimeout(() => { isRootDragOver = false; }, 80);
+  }
+
+  function handleScrollDrop(e) {
+    e.preventDefault();
+    clearTimeout(_rootDragTimer);
+    const nodeId = dragStore.draggingNodeId;
+    if (!nodeId) return;
+
+    isRootDragOver = false;
+    setTimeout(() => {
+      isRootDragOver = true;
+      setTimeout(() => {
+        isRootDragOver = false;
+        moveTreeNodeToRoot(nodeId);
+      }, 75);
+    }, 75);
+  }
 
   // Scroll position persistence
   let _saveScrollTimer = $state(null);
@@ -265,7 +296,13 @@
 </script>
 
 <aside class="library-tree">
-  <div class="tree-scroll" bind:this={scrollEl}>
+  <div
+    class="tree-scroll"
+    class:root-drag-over={isRootDragOver}
+    bind:this={scrollEl}
+    ondragover={handleScrollDragOver}
+    ondrop={handleScrollDrop}
+  >
     {#if hierarchy.length > 0}
       {#each hierarchy as node (node.id)}
         <TreeNode {node} />
@@ -297,5 +334,12 @@
   .loading {
     padding: 16px;
     color: var(--fg1);
+  }
+
+  .tree-scroll.root-drag-over {
+    /* box-shadow: inset 0 -3px 0 var(--meadow-green); */
+    outline: 2px solid var(--meadow-green);
+    outline-offset: -2px;
+    border-radius: var(--brad1);
   }
 </style>
