@@ -10,7 +10,7 @@
     'var(--cornflower-blue)',
   ];
 
-  let el;
+  let el = $state(null);
 
   $effect(() => {
     function handleOutside(e) {

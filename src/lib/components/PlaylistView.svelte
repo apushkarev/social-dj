@@ -93,7 +93,11 @@
         >
           <div class="col col-num">{i + 1}</div>
           <div class="col col-tag">
-            <ColorTag trackId={track.trackId} onopen={handleTagClick} />
+            <ColorTag
+              trackId={track.trackId}
+              onopen={handleTagClick}
+              onclose={() => { if (modalState?.trackId === track.trackId) modalState = null; }}
+            />
           </div>
           <div class="col col-bpm">{track.bpm ?? '—'}</div>
           <div class="col col-title">{track.name ?? '—'}</div>
