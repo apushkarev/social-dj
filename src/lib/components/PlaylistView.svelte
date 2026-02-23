@@ -162,6 +162,19 @@
     `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
   );
 
+  let tooltipComment = $state(null);
+  let tooltipTop = $state(0);
+
+  function handleCommentEnter(e, comment) {
+    if (!comment) return;
+    tooltipComment = comment;
+    tooltipTop = e.currentTarget.getBoundingClientRect().top;
+  }
+
+  function handleCommentLeave() {
+    tooltipComment = null;
+  }
+
   function formatTime(ms) {
 
     if (!ms) return '—';
@@ -211,13 +224,23 @@
           <div class="col col-title">{track.name ?? '—'}</div>
           <div class="col col-time">{formatTime(track.totalTime)}</div>
           <div class="col col-artist">{track.artist ?? '—'}</div>
-          <div class="col col-comments">{track.comments ?? ''}</div>
+          <div
+            class="col col-comments"
+            onmouseenter={e => handleCommentEnter(e, track.comments)}
+            onmouseleave={handleCommentLeave}
+          >{track.comments ?? ''}</div>
         </div>
       {/each}
 
     </div>
 
   </div>
+
+  {#if tooltipComment}
+    <div class="comment-tooltip" style="top: {tooltipTop}px;">
+      {tooltipComment}
+    </div>
+  {/if}
 
 {/if}
 
@@ -357,6 +380,26 @@
   .col-comments {
     width: 25rem;
     color: var(--fg1);
+  }
+
+  .comment-tooltip {
+    position: fixed;
+    right: 1em;
+    top: 0;
+    transform: translateY(calc(-100% - 0.5em));
+    z-index: 200;
+    max-width: 30em;
+    padding: 0.5em 0.75em;
+    background-color: var(--bg2);
+    border: 1px solid var(--border3);
+    border-radius: var(--brad2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    font-size: 0.875em;
+    color: var(--fg3);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    pointer-events: none;
   }
 
 </style>
