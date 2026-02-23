@@ -11,3 +11,4 @@ vite.config.ts.timestamp-*
 dist.zip
 app-state.json
 library.json
+library copy.json
