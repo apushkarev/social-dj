@@ -8,7 +8,7 @@
   import AddTreeItem from './AddTreeItem.svelte';
   import RenameTreeItem from './RenameTreeItem.svelte';
   import { contextMenu } from '../context-menu.svelte.js';
-  import { deleteTreeItem, addTracksToPlaylist } from '../tree-management.svelte.js';
+  import { deleteTreeItem, addTracksToPlaylist, moveTreeNode } from '../tree-management.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
 
   let {
@@ -51,6 +51,8 @@
 
   let isDragOver = $state(false);
 
+  // --- Track drop (playlist nodes only) ---
+
   function handleDragOver(e) {
     if (!dragStore.isDragging || dragStore.sourcePlaylistId === node.id) return;
     e.preventDefault();
@@ -68,22 +70,88 @@
     const ids = dragStore.trackIds;
     if (!ids.length) return;
 
-    // Flash: on (already showing) → off → on → off + commit
     isDragOver = false;
-
     setTimeout(() => {
-
       isDragOver = true;
-
       setTimeout(() => {
-
         isDragOver = false;
+        addTracksToPlaylist(node.id, ids);
+      }, 75);
+    }, 75);
+  }
 
-        setTimeout(() => {
-          addTracksToPlaylist(node.id, ids);
-        }, 100)
-      }, 100);
-    }, 100);
+  // --- Node drag (source, all nodes) ---
+
+  function createNodeDragGhost() {
+    const cs = getComputedStyle(document.documentElement);
+    const bg2 = cs.getPropertyValue('--bg2').trim();
+    const border3 = cs.getPropertyValue('--border3').trim();
+    const fg3 = cs.getPropertyValue('--fg3').trim();
+
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'position:fixed', 'top:-1000px', 'left:-1000px',
+      'display:flex', 'align-items:center', 'gap:8px',
+      'padding:8px 16px 8px 12px',
+      `background:${bg2}`, `border:1px solid ${border3}`,
+      'border-radius:8px', `color:${fg3}`,
+      'font-family:inherit', 'font-size:15px',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.5)',
+      'pointer-events:none', 'white-space:nowrap',
+    ].join(';');
+
+    const label = node.name.length > 24 ? node.name.slice(0, 24) + '\u2026' : node.name;
+    el.innerHTML = `<span style="display:flex;align-items:center">${isFolder ? icons.folder : icons.playlist}</span><span>${label}</span>`;
+    return el;
+  }
+
+  function handleNodeDragStart(e) {
+    e.stopPropagation();
+    dragStore.startNodeDrag(node.id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/x-tree-node', node.id);
+
+    const ghost = createNodeDragGhost();
+    document.body.appendChild(ghost);
+    const ghostH = ghost.getBoundingClientRect().height;
+    e.dataTransfer.setDragImage(ghost, -12, ghostH + 12);
+    requestAnimationFrame(() => {
+      if (document.body.contains(ghost)) document.body.removeChild(ghost);
+    });
+  }
+
+  function handleNodeDragEnd() {
+    dragStore.endNodeDrag();
+  }
+
+  // --- Node drop (folder nodes only) ---
+
+  function handleFolderDragOver(e) {
+    const dragging = dragStore.draggingNodeId;
+    if (!dragging || dragging === node.id) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    isDragOver = true;
+  }
+
+  function handleFolderDragLeave(e) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    isDragOver = false;
+  }
+
+  function handleFolderDrop(e) {
+    e.preventDefault();
+    const dragging = dragStore.draggingNodeId;
+    if (!dragging || dragging === node.id) return;
+
+    isDragOver = false;
+    setTimeout(() => {
+      isDragOver = true;
+      setTimeout(() => {
+        isDragOver = false;
+        moveTreeNode(dragging, node.id);
+      }, 75);
+    }, 75);
   }
 
   function handleContextMenu(e) {
@@ -166,12 +234,15 @@
     class:selected={isSelected}
     class:drag-over={isDragOver}
     data-snap-row
+    draggable="true"
     style="padding-left: {12 + depth * 20}px"
     onclick={handleClick}
     oncontextmenu={handleContextMenu}
-    ondragover={!isFolder ? handleDragOver : undefined}
-    ondragleave={!isFolder ? handleDragLeave : undefined}
-    ondrop={!isFolder ? handleDrop : undefined}
+    ondragstart={handleNodeDragStart}
+    ondragend={handleNodeDragEnd}
+    ondragover={isFolder ? handleFolderDragOver : handleDragOver}
+    ondragleave={isFolder ? handleFolderDragLeave : handleDragLeave}
+    ondrop={isFolder ? handleFolderDrop : handleDrop}
   >
     {#if isFolder}
       <span class="arrow" class:open={isOpen}>

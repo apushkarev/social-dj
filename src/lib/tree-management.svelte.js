@@ -114,6 +114,46 @@ export function addTracksToPlaylist(playlistId, trackIds) {
   saveHierarchy();
 }
 
+// Moves nodeId into targetFolderId. Blocks self-drop and circular moves.
+export function moveTreeNode(nodeId, targetFolderId) {
+  if (nodeId === targetFolderId) return;
+
+  const library = globals.get('library');
+  const nodePath = library.index[nodeId];
+  const targetPath = library.index[targetFolderId];
+  if (!nodePath || !targetPath) return;
+
+  // Block if target is a descendant of the node being moved
+  if (
+    targetPath.length >= nodePath.length &&
+    nodePath.every((v, i) => targetPath[i] === v)
+  ) return;
+
+  globals.update('library', current => {
+    // Navigate to source parent and target folder using live refs (before any mutation)
+    let sourceParent = { children: current.hierarchy };
+    for (let i = 0; i < nodePath.length - 1; i++) {
+      sourceParent = sourceParent.children[nodePath[i]];
+    }
+
+    let targetFolder = { children: current.hierarchy };
+    for (const i of targetPath) {
+      targetFolder = targetFolder.children[i];
+    }
+
+    // Splice node out, update its parentId, push into target
+    const [movedNode] = sourceParent.children.splice(nodePath[nodePath.length - 1], 1);
+    movedNode.parentId = targetFolderId;
+    targetFolder.children.push(movedNode);
+    targetFolder.children.sort((a, b) => a.name.localeCompare(b.name));
+
+    current.index = rebuildIndex(current.hierarchy);
+    return current;
+  });
+
+  saveHierarchy();
+}
+
 // Adds a new item under parentFolderId, updates globals, persists.
 // Returns { newId, newHierarchy, newIndex } or null if parent not found.
 export function createTreeItem(parentFolderId, type, name) {
@@ -132,6 +172,7 @@ export function createTreeItem(parentFolderId, type, name) {
       parentNode = parentNode.children[i];
     }
     parentNode.children.push(newItem);
+    parentNode.children.sort((a, b) => a.name.localeCompare(b.name));
     current.index = rebuildIndex(current.hierarchy);
     return current;
   });
