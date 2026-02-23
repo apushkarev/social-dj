@@ -204,6 +204,7 @@
     align-items: center;
     gap: 1em;
     height: 3em;
+    min-width: max-content;
 
     margin-bottom: 0.25em;
   }
@@ -303,7 +304,7 @@
   }
 
   .col-comments {
-    width: 40rem;
+    width: 25rem;
     color: var(--fg1);
   }
 
