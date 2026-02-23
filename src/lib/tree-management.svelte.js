@@ -23,8 +23,8 @@ export function rebuildIndex(hierarchy) {
 function saveHierarchy() {
   const lib = globals.get('library');
   window.electronAPI.saveHierarchy({
-    hierarchy: lib.hierarchy,
-    index: lib.index,
+    hierarchy: $state.snapshot(lib.hierarchy),
+    index: $state.snapshot(lib.index),
   });
 }
 
