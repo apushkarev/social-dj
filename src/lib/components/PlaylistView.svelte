@@ -32,91 +32,135 @@
   ];
 
   function nextColor(trackId) {
+
     const idx = CYCLE.indexOf(colorTags.get(String(trackId)));
+
     return CYCLE[(idx + 1) % CYCLE.length];
   }
 
   function handleTagLeftClick(trackId) {
+
     if (selectedTrackIds.has(trackId)) {
+
       const next = nextColor(trackId);
       for (const id of selectedTrackIds) colorTags.set(String(id), next);
+
     } else {
+
       selectedTrackIds = new Set();
       colorTags.set(String(trackId), nextColor(trackId));
     }
   }
 
   function handleTagRightClick(trackId) {
+
     if (selectedTrackIds.has(trackId)) {
+
       for (const id of selectedTrackIds) colorTags.set(String(id), null);
+
     } else {
+
       selectedTrackIds = new Set();
       colorTags.set(String(trackId), null);
     }
   }
 
   function handleRowClick(e, trackId) {
+
     if (e.shiftKey && anchorTrackId) {
+
       e.preventDefault();
+
       const anchorIdx = tracks.findIndex(t => t.trackId === anchorTrackId);
       const clickIdx  = tracks.findIndex(t => t.trackId === trackId);
+
       if (anchorIdx !== -1 && clickIdx !== -1) {
+
         const lo = Math.min(anchorIdx, clickIdx);
         const hi = Math.max(anchorIdx, clickIdx);
+
         selectedTrackIds = new Set(tracks.slice(lo, hi + 1).map(t => t.trackId));
       }
       // anchor stays fixed so further shift+clicks extend from the same point
+
     } else if (e.metaKey || e.ctrlKey) {
+
       const next = new Set(selectedTrackIds);
+
       if (next.has(trackId)) next.delete(trackId); else next.add(trackId);
+
       selectedTrackIds = next;
       anchorTrackId = trackId;
+
     } else if (selectedTrackIds.has(trackId)) {
+
       selectedTrackIds = new Set();
       anchorTrackId = null;
+
     } else {
+
       selectedTrackIds = new Set([trackId]);
       anchorTrackId = trackId;
     }
   }
 
   $effect(() => {
+
     function handleKeyDown(e) {
+
       if (!(e.metaKey || e.ctrlKey) || e.key !== 'a') return;
       if (!tracks.length) return;
+
       e.preventDefault();
+
       if (selectedTrackIds.size === tracks.length) {
         selectedTrackIds = new Set();
       } else {
         selectedTrackIds = new Set(tracks.map(t => t.trackId));
       }
     }
+
     document.addEventListener('keydown', handleKeyDown);
+
     return () => document.removeEventListener('keydown', handleKeyDown);
   });
 
   function getNodeById(lib, id) {
+
     if (!lib?.index || !id) return null;
+
     const path = lib.index[id];
+
     if (!path) return null;
+
     let node = { children: lib.hierarchy };
+
     for (const i of path) {
+
       node = node.children[i];
       if (!node) return null;
     }
+
     return node;
   }
 
   // Returns an array of node names from root down to nodeId.
   function getBreadcrumbPath(lib, nodeId) {
+
     if (!lib?.index || !nodeId) return null;
+
     const path = lib.index[nodeId];
+
     if (!path) return null;
+
     const names = [];
     let node = { children: lib.hierarchy };
+
     for (const i of path) {
+
       node = node.children[i];
       if (!node) return null;
+
       names.push(node.name);
     }
     return names;
@@ -129,20 +173,27 @@
 
     if (!names || names.length === 0) return null;
     if (names.length <= branchSteps) return names.join(' / ');
+
     return '... / ' + names.slice(-branchSteps).join(' / ');
   }
 
   function calcDisplayName() {
+
     if (selectedFolderView) {
+      
       const names = getBreadcrumbPath(library, selectedFolderView.id);
       if (names) return formatBreadcrumb(names);
+
       return selectedFolderView.name;
     }
     if (playlist?.type === 'playlist') {
+
       const names = getBreadcrumbPath(library, selectedPlaylistId);
       if (names) return formatBreadcrumb(names);
+
       return playlist.name;
     }
+
     return null;
   }
 
@@ -243,18 +294,22 @@
   }
 
   function handleDragStart(e, track) {
+
     const ids = selectedTrackIds.has(track.trackId)
       ? [...selectedTrackIds]
       : [track.trackId];
 
     dragStore.start(ids, selectedPlaylistId ?? null);
+
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('text/plain', JSON.stringify(ids));
 
     const ghost = createDragGhost(ids.length);
     document.body.appendChild(ghost);
+
     const ghostH = ghost.getBoundingClientRect().height;
     e.dataTransfer.setDragImage(ghost, -12, ghostH + 12);
+    
     requestAnimationFrame(() => {
       if (document.body.contains(ghost)) document.body.removeChild(ghost);
     });
