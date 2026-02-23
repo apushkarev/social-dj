@@ -8,6 +8,7 @@
 
   const stored = globals.get('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
+  let prevSelectedItem = $derived(globals.get('prev-sidebar-selected-item'));
 
   let treeVisible = $derived(selectedItem === 'tree');
   let prevTreeVisible = $state(true);
@@ -24,8 +25,13 @@
     document.documentElement.style.setProperty('--font-size', (globals.get('fontSize') ?? 16) + 'px');
   });
 
-  function onselect(id) {
-    selectedItem = selectedItem === id ? null : id;
+  function handleSelectSidebarModule(id) {
+
+    let prev = selectedItem;
+
+    selectedItem = selectedItem === id ? prevSelectedItem : id;
+
+    globals.set('prev-sidebar-selected-item', prev);
   }
 
   // Auto tree width
@@ -62,7 +68,7 @@
 
 <div class="titlebar"></div>
 <div class="app-layout">
-  <Sidebar {selectedItem} {onselect} />
+  <Sidebar {selectedItem} onselect={handleSelectSidebarModule} />
   <div
     class="tree-wrapper"
     class:hidden={!treeVisible}

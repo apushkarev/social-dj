@@ -9,6 +9,8 @@ let globalStorage = $state({
 
   // Persisted — populated from app-state.json on init, saved on every change
   'sidebar-selected-item': null,
+  'prev-sidebar-selected-item': null,
+  
   'tree-scroll-pos': null,
   'tree-width': null,
   'discreteScrolling': false,

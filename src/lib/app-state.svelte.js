@@ -2,6 +2,7 @@ import { globals } from './globals.svelte.js';
 
 const PERSISTED_KEYS = [
   'sidebar-selected-item',
+  'prev-sidebar-selected-item',
   'tree-scroll-pos',
   'tree-width',
   'discreteScrolling',
