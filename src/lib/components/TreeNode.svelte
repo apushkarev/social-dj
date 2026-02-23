@@ -14,7 +14,11 @@
   let isFolder = $derived(node.type === 'folder');
   let isOpen = $derived(isFolder && treeState.isOpen(node.id));
   let hasChildren = $derived(isFolder && node.children && node.children.length > 0);
-  let isSelected = $derived(!isFolder && globals.get('selectedPlaylistId') === node.id);
+  let isSelected = $derived(
+    isFolder
+      ? globals.get('selectedFolderView')?.id === node.id
+      : globals.get('selectedPlaylistId') === node.id
+  );
 
   // Recursively collect unique track IDs from all playlists in a subtree.
   // Uses insertion order for deduplication (Set preserves it).
@@ -115,16 +119,16 @@
     transition: background-color var(--td-100);
   }
 
-  .node-row:hover {
+  .node-row:hover, .node-row.folder:hover {
     background-color: var(--overlay1);
   }
 
-  .node-row.selected {
+  .node-row.selected, .node-row.folder.selected {
     background-color: var(--yellow-warm-80);
     color: var(--black4);
   }
 
-  .node-row.selected:hover {
+  .node-row.selected:hover, .node-row.folder.selected:hover {
     background-color: var(--yellow-warm-80);
   }
 
