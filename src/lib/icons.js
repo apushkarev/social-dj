@@ -16,7 +16,7 @@ export const icons = {
 
   arrowLeft: `
     <svg width="16" height="16" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-     <path d="M23 11L14.2164 19.7836C14.1481 19.8477 14.0936 19.9251 14.0564 20.0111C14.0192 20.0971 14 20.1898 14 20.2835C14 20.3772 14.0192 20.4699 14.0564 20.5558C14.0936 20.6418 14.1481 20.7192 14.2164 20.7834L23 29.567" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+     <path d="M23 11L14.2164 19.7836C14.1481 19.8477 14.0936 19.9251 14.0564 20.0111C14.0192 20.0971 14 20.1898 14 20.2835C14 20.3772 14.0192 20.4699 14.0564 20.5558C14.0936 20.6418 14.1481 20.7192 14.2164 20.7834L23 29.567" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
 

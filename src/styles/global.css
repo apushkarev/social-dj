@@ -41,10 +41,6 @@ body {
   
 }
 
-.icon svg {
+.icon svg, .arrow svg {
   scale: 1.5;
-}
-
-.arrow svg {
-  scale: 2;
 }

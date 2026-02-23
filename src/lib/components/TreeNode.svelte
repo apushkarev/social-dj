@@ -78,7 +78,7 @@
   {#if isFolder && isOpen && hasChildren}
     <div
       class="children depth-color-{depth % 6}"
-      style="--guide-left: {23 + depth * 20}px"
+      style="--guide-left: {20 + depth * 20}px"
       transition:slide={{ duration: 200 }}
     >
       {#each node.children as child (child.id)}
@@ -104,7 +104,7 @@
     background: none;
     color: var(--fg2);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 0.875em;
     font-weight: 400;
     cursor: pointer;
     padding-right: 12px;
@@ -136,8 +136,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
     transform: rotate(-180deg);
     transition: transform var(--td-250);
