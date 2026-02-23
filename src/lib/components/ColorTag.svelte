@@ -1,31 +1,6 @@
 <script>
-  import { colorTags } from '../color-tags.svelte.js';
-
-  let { trackId, onopen = () => {}, onclose = () => {} } = $props();
-
-  const CYCLE = [
-    null,
-    'var(--red)',
-    'var(--bristol-orange)',
-    'var(--yellow-warm)',
-    'var(--meadow-green)',
-    'var(--mint)',
-    'var(--cornflower-blue)',
-  ];
-
-  let color = $derived(colorTags.get(String(trackId)));
-
-  function handleClick() {
-    const idx = CYCLE.indexOf(color);
-    const next = CYCLE[(idx + 1) % CYCLE.length];
-    colorTags.set(String(trackId), next);
-  }
-
-  function handleContextMenu(e) {
-    e.preventDefault();
-    colorTags.set(String(trackId), null);
-  }
-  
+  // Pure presentational — all color logic lives in the parent.
+  let { color = null, onclick = () => {}, onrightclick = () => {} } = $props();
 </script>
 
 <div
@@ -33,8 +8,8 @@
   class:has-color={!!color}
   style={color ? `background-color: ${color};` : ''}
   onmousedown={(e) => e.stopPropagation()}
-  onclick={handleClick}
-  oncontextmenu={handleContextMenu}
+  onclick={(e) => { e.stopPropagation(); onclick(); }}
+  oncontextmenu={(e) => { e.preventDefault(); e.stopPropagation(); onrightclick(); }}
 ></div>
 
 <style>

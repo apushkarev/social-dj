@@ -2,18 +2,78 @@
   import { globals } from '../globals.svelte.js';
   import { colorTags } from '../color-tags.svelte.js';
   import ColorTag from './ColorTag.svelte';
-  import ColorTagModal from './ColorTagModal.svelte';
 
   let library            = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
   let selectedFolderView = $derived(globals.get('selectedFolderView'));
 
-  let selectedTrackId = $state(null);
+  let selectedTrackIds = $state(new Set());
 
   $effect(() => {
     selectedPlaylistId;
     selectedFolderView;
-    selectedTrackId = null;
+    selectedTrackIds = new Set();
+  });
+
+  const CYCLE = [
+    null,
+    'var(--red)',
+    'var(--bristol-orange)',
+    'var(--yellow-warm)',
+    'var(--meadow-green)',
+    'var(--mint)',
+    'var(--cornflower-blue)',
+  ];
+
+  function nextColor(trackId) {
+    const idx = CYCLE.indexOf(colorTags.get(String(trackId)));
+    return CYCLE[(idx + 1) % CYCLE.length];
+  }
+
+  function handleTagLeftClick(trackId) {
+    if (selectedTrackIds.has(trackId)) {
+      const next = nextColor(trackId);
+      for (const id of selectedTrackIds) colorTags.set(String(id), next);
+    } else {
+      selectedTrackIds = new Set();
+      colorTags.set(String(trackId), nextColor(trackId));
+    }
+  }
+
+  function handleTagRightClick(trackId) {
+    if (selectedTrackIds.has(trackId)) {
+      for (const id of selectedTrackIds) colorTags.set(String(id), null);
+    } else {
+      selectedTrackIds = new Set();
+      colorTags.set(String(trackId), null);
+    }
+  }
+
+  function handleRowClick(e, trackId) {
+    if (e.metaKey || e.ctrlKey) {
+      const next = new Set(selectedTrackIds);
+      if (next.has(trackId)) next.delete(trackId); else next.add(trackId);
+      selectedTrackIds = next;
+    } else if (selectedTrackIds.has(trackId)) {
+      selectedTrackIds = new Set();
+    } else {
+      selectedTrackIds = new Set([trackId]);
+    }
+  }
+
+  $effect(() => {
+    function handleKeyDown(e) {
+      if (!(e.metaKey || e.ctrlKey) || e.key !== 'a') return;
+      if (!tracks.length) return;
+      e.preventDefault();
+      if (selectedTrackIds.size === tracks.length) {
+        selectedTrackIds = new Set();
+      } else {
+        selectedTrackIds = new Set(tracks.map(t => t.trackId));
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   });
 
   function getNodeById(lib, id) {
@@ -51,17 +111,14 @@
     `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
   );
 
-  let modalState = $state(null);
-
-  function handleTagClick(trackId, rect) {
-    modalState = modalState?.trackId === trackId ? null : { trackId, rect };
-  }
-
   function formatTime(ms) {
+
     if (!ms) return '—';
+
     const totalSec = Math.floor(ms / 1000);
     const min = Math.floor(totalSec / 60);
     const sec = totalSec % 60;
+    
     return `${min}:${sec.toString().padStart(2, '0')}`;
   }
 </script>
@@ -88,15 +145,15 @@
       {#each tracks as track, i (track.trackId)}
         <div
           class="track-row data-row"
-          class:selected={selectedTrackId === track.trackId}
-          onclick={() => selectedTrackId = track.trackId}
+          class:selected={selectedTrackIds.has(track.trackId)}
+          onclick={(e) => handleRowClick(e, track.trackId)}
         >
           <div class="col col-num">{i + 1}</div>
           <div class="col col-tag">
             <ColorTag
-              trackId={track.trackId}
-              onopen={handleTagClick}
-              onclose={() => { if (modalState?.trackId === track.trackId) modalState = null; }}
+              color={colorTags.get(String(track.trackId))}
+              onclick={() => handleTagLeftClick(track.trackId)}
+              onrightclick={() => handleTagRightClick(track.trackId)}
             />
           </div>
           <div class="col col-bpm">{track.bpm ?? '—'}</div>
@@ -110,15 +167,6 @@
     </div>
 
   </div>
-
-  {#if modalState}
-    <ColorTagModal
-      anchorRect={modalState.rect}
-      currentColor={colorTags.get(String(modalState.trackId))}
-      onselect={(color) => colorTags.set(String(modalState.trackId), color)}
-      onclose={() => modalState = null}
-    />
-  {/if}
 
 {/if}
 
