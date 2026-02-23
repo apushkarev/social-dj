@@ -52,7 +52,7 @@
     if (!name) return;
 
     // — library operation + persist —
-    const result = await createTreeItem(parentFolderId, type, name);
+    const result = createTreeItem(parentFolderId, type, name);
     if (!result) return;
 
     const { newId, newHierarchy, newIndex } = result;
