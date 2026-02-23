@@ -51,8 +51,35 @@
     onwidthchange(Math.ceil(maxW) + EXTRA);
   });
 
-  let scrollEl;
-  let stopTimeout;
+  let scrollEl = $state(null);
+  let stopTimeout = $state(null);
+
+  // Scroll position persistence
+  const SCROLL_KEY = 'tree-scroll-pos';
+  let _saveScrollTimer = $state(null);
+  let _scrollRestored = $state(false);
+
+  function handleScroll() {
+    clearTimeout(_saveScrollTimer);
+    _saveScrollTimer = setTimeout(() => {
+      localStorage.setItem(SCROLL_KEY, String(scrollEl.scrollTop));
+    }, 150);
+  }
+
+  // Restore once after hierarchy first loads
+  $effect(() => {
+    if (!scrollEl || !hierarchy.length || _scrollRestored) return;
+    _scrollRestored = true;
+    const saved = localStorage.getItem(SCROLL_KEY);
+    if (saved) scrollEl.scrollTop = parseInt(saved, 10);
+  });
+
+  // Attach scroll listener
+  $effect(() => {
+    if (!scrollEl) return;
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollEl.removeEventListener('scroll', handleScroll);
+  });
   let isSnapping = false;
   let accumulatedDelta = 0;
   let wheelSamples = [];

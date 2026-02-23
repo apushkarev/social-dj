@@ -21,7 +21,9 @@
   }
 
   // Auto tree width
-  let treeWidth = $state(400);
+  const TREE_WIDTH_KEY = 'tree-width';
+  const storedWidth = localStorage.getItem(TREE_WIDTH_KEY);
+  let treeWidth = $state(storedWidth ? parseInt(storedWidth, 10) : 400);
 
   function handleTreeWidth(newWidth) {
     // Always wait for the 200ms slide transition to finish before resizing,
@@ -31,6 +33,7 @@
 
     requestAnimationFrame(() => {
       treeWidth = newWidth;
+      localStorage.setItem(TREE_WIDTH_KEY, String(newWidth));
     })
   }
 </script>
