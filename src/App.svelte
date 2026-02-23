@@ -4,6 +4,7 @@
   import Settings from './lib/components/Settings.svelte';
   import PlaylistView from './lib/components/PlaylistView.svelte';
   import { globals } from './lib/globals.svelte.js';
+  import ContextMenu from './lib/components/ContextMenu.svelte';
   import { saveAppState } from './lib/app-state.svelte.js';
 
   const stored = globals.get('sidebar-selected-item');
@@ -66,6 +67,7 @@
 
 </script>
 
+<ContextMenu />
 <div class="titlebar"></div>
 <div class="app-layout">
   <Sidebar {selectedItem} onselect={handleSelectSidebarModule} />

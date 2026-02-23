@@ -102,6 +102,8 @@ export const ds = {
   '--brad2': '10px',
   '--brad3': '16px',
   '--brad4': '22px',
+
+  '--bxs': '0 4px 32px rgba(0, 0, 0, 0.2)'
 };
 
 export const initializeDesignSystem = () => {

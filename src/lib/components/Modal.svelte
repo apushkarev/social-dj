@@ -84,7 +84,7 @@
     border: 1px solid var(--border3);
     border-radius: var(--brad2);
     padding: 1.25em;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--bxs);
     opacity: 0;
     transition: opacity var(--td-100);
   }

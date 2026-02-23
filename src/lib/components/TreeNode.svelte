@@ -6,6 +6,9 @@
   import { saveAppState } from '../app-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
   import AddTreeItem from './AddTreeItem.svelte';
+  import RenameTreeItem from './RenameTreeItem.svelte';
+  import { contextMenu } from '../context-menu.svelte.js';
+  import { deleteTreeItem } from '../tree-management.svelte.js';
 
   let {
     node,
@@ -40,6 +43,44 @@
   let modalType = $state('playlist');
   let modalX = $state(0);
   let modalY = $state(0);
+
+  let showRenameModal = $state(false);
+  let contextX = $state(0);
+  let contextY = $state(0);
+
+  function handleContextMenu(e) {
+    e.preventDefault();
+    contextX = e.clientX;
+    contextY = e.clientY;
+
+    contextMenu.show(e.clientX, e.clientY, [
+      {
+        icon: 'edit',
+        text: 'Rename',
+        callback: () => { showRenameModal = true; },
+      },
+      { type: 'separator' },
+      {
+        icon: 'trash',
+        text: 'Delete',
+        callback: handleDelete,
+      },
+    ]);
+  }
+
+  async function handleDelete() {
+    await deleteTreeItem(node.id);
+
+    if (globals.get('selectedPlaylistId') === node.id) {
+      globals.set('selectedPlaylistId', null);
+      saveAppState();
+    }
+
+    if (globals.get('selectedFolderView')?.id === node.id) {
+      globals.set('selectedFolderView', null);
+      saveAppState();
+    }
+  }
 
   function handleAddFolder(e) {
     e.stopPropagation();
@@ -88,6 +129,7 @@
     data-snap-row
     style="padding-left: {12 + depth * 20}px"
     onclick={handleClick}
+    oncontextmenu={handleContextMenu}
   >
     {#if isFolder}
       <span class="arrow" class:open={isOpen}>
@@ -119,6 +161,14 @@
     bind:visible={showModal}
   />
 {/if}
+
+<RenameTreeItem
+  nodeId={node.id}
+  nodeName={node.name}
+  x={contextX}
+  y={contextY}
+  bind:visible={showRenameModal}
+/>
 
   {#if isFolder && isOpen && hasChildren}
     <div
