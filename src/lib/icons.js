@@ -52,9 +52,9 @@ export const icons = {
   addFolder: `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g clip-path="url(#clip0_2341_7)">
-        <path d="M8 6.40785V11.715" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M5.34642 9.06143H10.6536" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M1.10071 13.5724V2.42744C1.10071 2.14593 1.21254 1.87595 1.41159 1.67689C1.61065 1.47783 1.88062 1.36601 2.16214 1.36601H6.07881C6.32127 1.35894 6.55885 1.43514 6.75198 1.58191C6.94509 1.72869 7.08212 1.93719 7.14024 2.1727L7.46928 3.48887H13.8379C14.1193 3.48887 14.3894 3.60069 14.5884 3.79975C14.7874 3.99881 14.8993 4.26878 14.8993 4.5503V13.5724C14.8993 13.854 14.7874 14.1239 14.5884 14.3229C14.3894 14.5221 14.1193 14.6338 13.8379 14.6338H2.16214C1.88062 14.6338 1.61065 14.5221 1.41159 14.3229C1.21254 14.1239 1.10071 13.854 1.10071 13.5724Z" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M8 6.40785V11.715" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M5.34642 9.06143H10.6536" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M1.10071 13.5724V2.42744C1.10071 2.14593 1.21254 1.87595 1.41159 1.67689C1.61065 1.47783 1.88062 1.36601 2.16214 1.36601H6.07881C6.32127 1.35894 6.55885 1.43514 6.75198 1.58191C6.94509 1.72869 7.08212 1.93719 7.14024 2.1727L7.46928 3.48887H13.8379C14.1193 3.48887 14.3894 3.60069 14.5884 3.79975C14.7874 3.99881 14.8993 4.26878 14.8993 4.5503V13.5724C14.8993 13.854 14.7874 14.1239 14.5884 14.3229C14.3894 14.5221 14.1193 14.6338 13.8379 14.6338H2.16214C1.88062 14.6338 1.61065 14.5221 1.41159 14.3229C1.21254 14.1239 1.10071 13.854 1.10071 13.5724Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
       </g>
       <defs>
         <clipPath id="clip0_2341_7">
@@ -67,9 +67,9 @@ export const icons = {
   addPlaylist: `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
       <g clip-path="url(#clip0_2341_2)">
-        <path d="M3.22357 5.87714V2.16214C3.22357 1.88062 3.3354 1.61065 3.53445 1.41159C3.73351 1.21254 4.00349 1.10071 4.285 1.10071H11.1843L14.8993 4.81571V13.8379C14.8993 14.1193 14.7874 14.3894 14.5884 14.5884C14.3894 14.7874 14.1193 14.8993 13.8379 14.8993H8.53071" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M4.28499 8.5307V14.8993" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M1.10071 11.715H7.46928" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M3.22357 5.87714V2.16214C3.22357 1.88062 3.3354 1.61065 3.53445 1.41159C3.73351 1.21254 4.00349 1.10071 4.285 1.10071H11.1843L14.8993 4.81571V13.8379C14.8993 14.1193 14.7874 14.3894 14.5884 14.5884C14.3894 14.7874 14.1193 14.8993 13.8379 14.8993H8.53071" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M4.28499 8.5307V14.8993" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M1.10071 11.715H7.46928" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
       </g>
       <defs>
         <clipPath id="clip0_2341_2">

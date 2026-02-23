@@ -78,6 +78,13 @@
     </span>
 
     <span class="label">{node.name}</span>
+
+    {#if isFolder}
+      <span class="node-actions" onclick={e => e.stopPropagation()}>
+        <span class="action-icon">{@html icons.addFolder}</span>
+        <span class="action-icon">{@html icons.addPlaylist}</span>
+      </span>
+    {/if}
   </button>
 
   {#if isFolder && isOpen && hasChildren}
@@ -100,6 +107,7 @@
   }
 
   .node-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -107,7 +115,7 @@
     height: 28px;
     border: none;
     background: none;
-    color: var(--fg2);
+    color: var(--fg2-s);
     font-family: inherit;
     font-size: 0.875em;
     font-weight: 400;
@@ -130,10 +138,11 @@
 
   .node-row.selected:hover, .node-row.folder.selected:hover {
     background-color: var(--yellow-warm-80);
+    color: var(--black6);
   }
 
   .node-row.folder {
-    color: var(--fg2);
+    color: var(--fg2-s);
     font-weight: 600;
   }
 
@@ -146,7 +155,7 @@
     flex-shrink: 0;
     transform: rotate(-180deg);
     transition: transform var(--td-250);
-    color: var(--fg2);
+    color: var(--fg2-s);
   }
 
   .arrow.open {
@@ -158,7 +167,7 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--fg2);
+    color: var(--fg2-s);
   }
 
   .selected .icon, .selected .arrow {
@@ -173,6 +182,52 @@
 
   .selected .label {
     font-weight: 600;
+  }
+
+  .node-actions {
+    position: absolute;
+    right: 0.75em;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    opacity: 0;
+    transition: opacity var(--td-100);
+    pointer-events: none;
+  }
+
+  .node-row:hover .node-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg2-s);
+    cursor: pointer;
+  }
+
+  .selected .action-icon {
+    color: var(--black3);
+  }
+
+  .action-icon:hover {
+    color: var(--fg3-s);
+  }
+
+  .action-icon:active {
+    color: var(--fg5-s);
+  }
+
+  .selected .action-icon:hover {
+    color: var(--black3-5);
+  }
+
+  .selected .action-icon:active {
+    color: var(--black4);
   }
 
   .children {
