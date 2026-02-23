@@ -26,16 +26,24 @@
   }
 
   function calcNodeWidth(node, depth) {
+
     const ctx      = getMeasureCtx();
+
     const padLeft  = 12 + depth * 20;
+
     const isFolder = node.type === 'folder';
+
     ctx.font       = `${isFolder ? 600 : 500} 14px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+    
     const textW    = ctx.measureText(node.name).width;
     const icons    = isFolder
       ? ARROW_W + GAP + ICON_W + GAP   // arrow + gap + icon + gap
       : ICON_W + GAP;                  // icon + gap
-    let maxW = padLeft + icons + textW + PAD_R;
+
+    let maxW = padLeft + icons + textW + PAD_R + (isFolder ? EXTRA : 0); 
+
     if (isFolder && treeState.isOpen(node.id) && node.children?.length) {
+
       for (const child of node.children) {
         maxW = Math.max(maxW, calcNodeWidth(child, depth + 1));
       }
@@ -44,12 +52,16 @@
   }
 
   $effect(() => {
+
     if (!hierarchy.length || !onwidthchange) return;
+
     let maxW = MIN_W;
+
     for (const node of hierarchy) {
       maxW = Math.max(maxW, calcNodeWidth(node, 0));
     }
-    onwidthchange(Math.ceil(maxW) + EXTRA);
+
+    onwidthchange(Math.ceil(maxW));
   });
 
   let scrollEl = $state(null);
@@ -60,8 +72,11 @@
   let _scrollRestored = $state(false);
 
   function handleScroll() {
+
     clearTimeout(_saveScrollTimer);
+
     _saveScrollTimer = setTimeout(() => {
+
       globals.set('tree-scroll-pos', scrollEl.scrollTop);
       saveAppState();
     }, 150);
@@ -69,18 +84,26 @@
 
   // Restore once after hierarchy first loads
   $effect(() => {
+
     if (!scrollEl || !hierarchy.length || _scrollRestored) return;
+
     _scrollRestored = true;
+
     const saved = globals.get('tree-scroll-pos');
+
     if (saved !== null) scrollEl.scrollTop = Number(saved);
   });
 
   // Attach scroll listener
   $effect(() => {
+
     if (!scrollEl) return;
+
     scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => scrollEl.removeEventListener('scroll', handleScroll);
   });
+
   let isSnapping = false;
   let accumulatedDelta = 0;
   let wheelSamples = [];
@@ -94,12 +117,15 @@
   const SNAP_DELAY = 75;
 
   async function loadLibrary() {
+
     const [tracksRes, hierarchyRes] = await Promise.all([
       fetch('/library/tracks.json'),
       fetch('/library/hierarchy.json'),
     ]);
+
     const { tracks } = await tracksRes.json();
     const { hierarchy, index } = await hierarchyRes.json();
+
     globals.set('library', { tracks, hierarchy, index });
   }
 
@@ -108,15 +134,20 @@
   });
 
   $effect(() => {
+
     if (!scrollEl || !discreteScrolling) return;
+
     scrollEl.addEventListener('wheel', handleWheel, { passive: false });
+
     return () => scrollEl.removeEventListener('wheel', handleWheel);
   });
 
   function getRowOffsets() {
+
     const rows = scrollEl.querySelectorAll('[data-snap-row]');
     const containerRect = scrollEl.getBoundingClientRect();
     const st = scrollEl.scrollTop;
+
     return Array.from(rows, row => {
       return row.getBoundingClientRect().top - containerRect.top + st;
     });
@@ -125,9 +156,13 @@
   function findNearest(offsets, scrollTop) {
 
     let best = offsets[0];
+
     let bestDist = Math.abs(scrollTop - best);
+
     for (const pos of offsets) {
+
       const dist = Math.abs(scrollTop - pos);
+
       if (dist < bestDist) {
         bestDist = dist;
         best = pos;
@@ -138,42 +173,62 @@
   }
 
   function findNext(offsets, scrollTop, direction) {
+
     if (direction > 0) {
+
       for (const pos of offsets) {
         if (pos > scrollTop + 2) return pos;
       }
+
       return offsets[offsets.length - 1];
+
     } else {
+
       for (let i = offsets.length - 1; i >= 0; i--) {
         if (offsets[i] < scrollTop - 2) return offsets[i];
       }
+
       return offsets[0];
     }
   }
 
   function smoothScroll(target) {
+
     isSnapping = true;
+
     scrollEl.scrollTo({ top: target, behavior: 'smooth' });
+
     setTimeout(() => { isSnapping = false; }, 200);
   }
 
   function snapToNearest() {
+
     if (isSnapping) return;
+
     const offsets = getRowOffsets();
+
     if (!offsets.length) return;
+
     const target = findNearest(offsets, scrollEl.scrollTop);
+
     if (Math.abs(scrollEl.scrollTop - target) < 2) return;
+
     smoothScroll(target);
   }
 
   function stepRow(direction) {
+
     if (isSnapping) return;
+
     const offsets = getRowOffsets();
+
     if (!offsets.length) return;
+
     smoothScroll(findNext(offsets, scrollEl.scrollTop, direction));
   }
 
   function handleWheel(e) {
+
     e.preventDefault();
 
     const now = Date.now();
@@ -184,19 +239,25 @@
     const isSlow = velocity < SLOW_THRESHOLD;
 
     if (isSlow) {
+
       accumulatedDelta += e.deltaY;
+
       if (Math.abs(accumulatedDelta) >= STEP_THRESHOLD) {
         stepRow(accumulatedDelta > 0 ? 1 : -1);
         accumulatedDelta = 0;
       }
     } else {
+
       scrollEl.scrollTop += e.deltaY;
       accumulatedDelta = 0;
     }
 
     clearTimeout(stopTimeout);
+
     stopTimeout = setTimeout(() => {
+
       snapToNearest();
+      
       wheelSamples = [];
       accumulatedDelta = 0;
     }, SNAP_DELAY);
