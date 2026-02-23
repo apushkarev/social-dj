@@ -107,6 +107,14 @@ function buildHierarchy(flatItems) {
   return { hierarchy: roots, index };
 }
 
+ipcMain.on('write-app-state', (_event, data) => {
+  try {
+    const publicDir = resolve(__dirname, '..', 'public');
+    mkdirSync(publicDir, { recursive: true });
+    writeFileSync(resolve(publicDir, 'app-state.json'), JSON.stringify(data, null, 2));
+  } catch {}
+});
+
 ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
   try {
     const lib = plist.parse(xmlContent);

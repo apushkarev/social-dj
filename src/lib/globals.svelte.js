@@ -1,10 +1,19 @@
 let globalStorage = $state({
 
+  // Runtime — not persisted
   library: null,
   selectedPlaylistId: null,
 
   // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
-  selectedFolderView: null
+  selectedFolderView: null,
+
+  // Persisted — populated from app-state.json on init, saved on every change
+  'sidebar-selected-item': null,
+  'tree-scroll-pos': null,
+  'tree-width': null,
+  'discreteScrolling': false,
+  'color-tags': {},
+  'tree-open-folders': [],
 });
 
 function getGlobals() {

@@ -2,6 +2,7 @@
   import { globals } from '../globals.svelte.js';
   import { treeState } from '../tree-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
+  import { saveAppState } from '../app-state.svelte.js';
 
   let { onwidthchange = undefined } = $props();
 
@@ -55,14 +56,14 @@
   let stopTimeout = $state(null);
 
   // Scroll position persistence
-  const SCROLL_KEY = 'tree-scroll-pos';
   let _saveScrollTimer = $state(null);
   let _scrollRestored = $state(false);
 
   function handleScroll() {
     clearTimeout(_saveScrollTimer);
     _saveScrollTimer = setTimeout(() => {
-      localStorage.setItem(SCROLL_KEY, String(scrollEl.scrollTop));
+      globals.set('tree-scroll-pos', scrollEl.scrollTop);
+      saveAppState();
     }, 150);
   }
 
@@ -70,8 +71,8 @@
   $effect(() => {
     if (!scrollEl || !hierarchy.length || _scrollRestored) return;
     _scrollRestored = true;
-    const saved = localStorage.getItem(SCROLL_KEY);
-    if (saved) scrollEl.scrollTop = parseInt(saved, 10);
+    const saved = globals.get('tree-scroll-pos');
+    if (saved !== null) scrollEl.scrollTop = Number(saved);
   });
 
   // Attach scroll listener
@@ -84,9 +85,8 @@
   let accumulatedDelta = 0;
   let wheelSamples = [];
 
-  let discreteScrolling = $state(
-    localStorage.getItem('discreteScrolling') === 'true'
-  );
+  const _ds = globals.get('discreteScrolling');
+  let discreteScrolling = $state(_ds === true || _ds === 'true');
 
   const VELOCITY_WINDOW = 100;
   const SLOW_THRESHOLD = 100;

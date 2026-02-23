@@ -3,6 +3,7 @@
   import { icons } from '../icons.js';
   import { treeState } from '../tree-state.svelte.js';
   import { globals } from '../globals.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
 
   let {
@@ -39,12 +40,14 @@
           name: node.name,
           trackIds: collectFolderTrackIds(node),
         });
+        saveAppState();
       } else {
         treeState.toggle(node.id);
       }
     } else {
       globals.set('selectedFolderView', null);
       globals.set('selectedPlaylistId', node.id);
+      saveAppState();
     }
   }
 </script>

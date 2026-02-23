@@ -3,8 +3,10 @@
   import Sidebar from './lib/components/Sidebar.svelte';
   import Settings from './lib/components/Settings.svelte';
   import PlaylistView from './lib/components/PlaylistView.svelte';
+  import { globals } from './lib/globals.svelte.js';
+  import { saveAppState } from './lib/app-state.svelte.js';
 
-  const stored = localStorage.getItem('sidebar-selected-item');
+  const stored = globals.get('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
 
   let treeVisible = $derived(selectedItem === 'tree');
@@ -12,18 +14,17 @@
   let sliderEl = $state();
 
   $effect(() => {
-    localStorage.setItem('sidebar-selected-item', selectedItem ?? 'none');
+    globals.set('sidebar-selected-item', selectedItem ?? 'none');
+    saveAppState();
   });
-
 
   function onselect(id) {
     selectedItem = selectedItem === id ? null : id;
   }
 
   // Auto tree width
-  const TREE_WIDTH_KEY = 'tree-width';
-  const storedWidth = localStorage.getItem(TREE_WIDTH_KEY);
-  let treeWidth = $state(storedWidth ? parseInt(storedWidth, 10) : 400);
+  const storedWidth = globals.get('tree-width');
+  let treeWidth = $state(storedWidth ? parseInt(String(storedWidth), 10) : 400);
 
   function handleTreeWidth(newWidth) {
     // Always wait for the 200ms slide transition to finish before resizing,
@@ -33,7 +34,8 @@
 
     requestAnimationFrame(() => {
       treeWidth = newWidth;
-      localStorage.setItem(TREE_WIDTH_KEY, String(newWidth));
+      globals.set('tree-width', newWidth);
+      saveAppState();
     })
   }
 </script>
