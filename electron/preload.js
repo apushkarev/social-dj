@@ -4,4 +4,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
   parseLibrary: (xmlContent) => ipcRenderer.invoke('parse-itunes-library', xmlContent),
   writeAppState: (data) => ipcRenderer.send('write-app-state', data),
+  saveLibrary: (data) => ipcRenderer.invoke('save-library', data),
 });

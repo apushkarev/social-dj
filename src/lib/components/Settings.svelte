@@ -3,6 +3,7 @@
   import { treeState } from '../tree-state.svelte.js';
   import { saveAppState } from '../app-state.svelte.js';
   import Button from './Button.svelte';
+  import InputField from './InputField.svelte';
 
   let { show } = $props();
 
@@ -97,13 +98,14 @@
         <span class="setting-label">Font size</span>
         <div class="font-size-control">
           <button class="step-btn" onclick={decreaseFontSize}>−</button>
-          <input
-            class="font-size-input"
+          <InputField
             type="number"
-            min="8"
-            max="32"
-            step="0.5"
             value={fontSize}
+            min={8}
+            max={32}
+            step={0.5}
+            width="4em"
+            textalign="center"
             onchange={handleFontSizeChange}
           />
           <button class="step-btn" onclick={increaseFontSize}>+</button>
@@ -231,25 +233,6 @@
     display: flex;
     align-items: center;
     gap: 0.375em;
-  }
-
-  .font-size-input {
-    background-color: var(--overlay0);
-    border: 1px solid var(--border2);
-    border-radius: var(--brad1);
-    color: var(--fg4);
-    font-family: inherit;
-    font-size: 1em;
-    height: 2em;
-    padding: 0 0.75em;
-    outline: none;
-    width: 4em;
-    text-align: center;
-  }
-
-  .font-size-input::-webkit-outer-spin-button,
-  .font-size-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
   }
 
   .step-btn {

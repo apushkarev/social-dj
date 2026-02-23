@@ -5,6 +5,7 @@
   import { globals } from '../globals.svelte.js';
   import { saveAppState } from '../app-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
+  import AddTreeItem from './AddTreeItem.svelte';
 
   let {
     node,
@@ -33,6 +34,27 @@
     }
     recurse(n);
     return [...seen];
+  }
+
+  let showModal = $state(false);
+  let modalType = $state('playlist');
+  let modalX = $state(0);
+  let modalY = $state(0);
+
+  function handleAddFolder(e) {
+    e.stopPropagation();
+    modalType = 'folder';
+    modalX = e.clientX;
+    modalY = e.clientY + 8;
+    showModal = true;
+  }
+
+  function handleAddPlaylist(e) {
+    e.stopPropagation();
+    modalType = 'playlist';
+    modalX = e.clientX;
+    modalY = e.clientY + 8;
+    showModal = true;
   }
 
   function handleClick(e) {
@@ -81,11 +103,21 @@
 
     {#if isFolder}
       <span class="node-actions" onclick={e => e.stopPropagation()}>
-        <span class="action-icon">{@html icons.addFolder}</span>
-        <span class="action-icon">{@html icons.addPlaylist}</span>
+        <span class="action-icon" onclick={handleAddPlaylist}>{@html icons.addPlaylist}</span>
+        <span class="action-icon" onclick={handleAddFolder}>{@html icons.addFolder}</span>
       </span>
     {/if}
   </button>
+
+{#if isFolder}
+  <AddTreeItem
+    type={modalType}
+    parentFolderId={node.id}
+    x={modalX}
+    y={modalY}
+    bind:visible={showModal}
+  />
+{/if}
 
   {#if isFolder && isOpen && hasChildren}
     <div

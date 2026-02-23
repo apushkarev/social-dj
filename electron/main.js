@@ -107,6 +107,17 @@ function buildHierarchy(flatItems) {
   return { hierarchy: roots, index };
 }
 
+ipcMain.handle('save-library', (_event, data) => {
+  try {
+    const publicDir = resolve(__dirname, '..', 'public');
+    mkdirSync(publicDir, { recursive: true });
+    writeFileSync(resolve(publicDir, 'library.json'), JSON.stringify(data, null, 2));
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
 ipcMain.on('write-app-state', (_event, data) => {
   try {
     const publicDir = resolve(__dirname, '..', 'public');
