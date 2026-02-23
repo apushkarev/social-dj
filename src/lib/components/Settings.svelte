@@ -1,6 +1,7 @@
 <script>
   import { globals } from '../globals.svelte.js';
   import { treeState } from '../tree-state.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
   import Button from './Button.svelte';
 
   let { show } = $props();
@@ -11,6 +12,28 @@
   let visible = $state(false);
   let status = $state(null); // null | 'loading' | 'success' | 'error'
   let errorMsg = $state('');
+
+  // Font size
+  let fontSize = $state(globals.get('fontSize') ?? 16);
+
+  $effect(() => {
+    fontSize = globals.get('fontSize') ?? 16;
+  });
+
+  function setFontSize(val) {
+    const clamped = Math.round(Math.min(32, Math.max(8, val)) * 2) / 2;
+    fontSize = clamped;
+    globals.set('fontSize', clamped);
+    saveAppState();
+  }
+
+  function increaseFontSize() { setFontSize(fontSize + 0.5); }
+  function decreaseFontSize() { setFontSize(fontSize - 0.5); }
+
+  function handleFontSizeChange(e) {
+    const val = parseFloat(e.target.value);
+    if (!isNaN(val)) setFontSize(val);
+  }
 
   $effect(() => {
     if (show) {
@@ -66,6 +89,27 @@
 >
   <div class="settings-inner">
     <h1 class="heading">Settings</h1>
+
+    <section class="section">
+      <h2 class="subheading">Appearance</h2>
+
+      <div class="setting-row">
+        <span class="setting-label">Font size</span>
+        <div class="font-size-control">
+          <button class="step-btn" onclick={decreaseFontSize}>−</button>
+          <input
+            class="font-size-input"
+            type="number"
+            min="8"
+            max="32"
+            step="0.5"
+            value={fontSize}
+            onchange={handleFontSizeChange}
+          />
+          <button class="step-btn" onclick={increaseFontSize}>+</button>
+        </div>
+      </div>
+    </section>
 
     <section class="section">
       <h2 class="subheading">Library management</h2>
@@ -169,5 +213,62 @@
 
   .file-input-hidden {
     display: none;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: 1em;
+  }
+
+  .setting-label {
+    font-size: 0.875em;
+    font-weight: 500;
+    color: var(--fg3);
+  }
+
+  .font-size-control {
+    display: flex;
+    align-items: center;
+    gap: 0.375em;
+  }
+
+  .font-size-input {
+    background-color: var(--overlay0);
+    border: 1px solid var(--border2);
+    border-radius: var(--brad1);
+    color: var(--fg4);
+    font-family: inherit;
+    font-size: 1em;
+    height: 2em;
+    padding: 0 0.75em;
+    outline: none;
+    width: 4em;
+    text-align: center;
+  }
+
+  .font-size-input::-webkit-outer-spin-button,
+  .font-size-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .step-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2em;
+    height: 2em;
+    border: 1px solid var(--border2);
+    border-radius: var(--brad1);
+    background-color: var(--overlay0);
+    color: var(--fg3);
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color var(--td-100);
+  }
+
+  .step-btn:hover {
+    background-color: var(--overlay2);
   }
 </style>

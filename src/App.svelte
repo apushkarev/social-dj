@@ -19,6 +19,11 @@
     saveAppState();
   });
 
+  // Keep --font-size in sync with globals reactively
+  $effect(() => {
+    document.documentElement.style.setProperty('--font-size', (globals.get('fontSize') ?? 16) + 'px');
+  });
+
   function onselect(id) {
     selectedItem = selectedItem === id ? null : id;
   }

@@ -7,7 +7,7 @@ html, body, #app {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  font-size: 16px;
+  font-size: var(--font-size, 16px);
 }
 
 body {

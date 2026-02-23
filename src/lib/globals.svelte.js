@@ -14,6 +14,7 @@ let globalStorage = $state({
   'discreteScrolling': false,
   'color-tags': {},
   'tree-open-folders': [],
+  'fontSize': 16,
 });
 
 function getGlobals() {

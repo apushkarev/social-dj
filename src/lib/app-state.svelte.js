@@ -9,6 +9,7 @@ const PERSISTED_KEYS = [
   'tree-open-folders',
   'selectedPlaylistId',
   'selectedFolderView',
+  'fontSize',
 ];
 
 // Loads persisted state from app-state.json into globals.
