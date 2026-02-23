@@ -169,12 +169,14 @@
   // Shows last 3 nodes; prefixes with '... / ' when path is deeper.
   function formatBreadcrumb(names) {
 
-    const branchSteps = 4;
+    const branchSteps = 3;
+    // const delimiter = ' / ';
+    const delimiter = ' • ';
 
     if (!names || names.length === 0) return null;
-    if (names.length <= branchSteps) return names.join(' / ');
+    if (names.length <= branchSteps) return names.join(delimiter);
 
-    return '... / ' + names.slice(-branchSteps).join(' / ');
+    return '...' + delimiter + names.slice(-branchSteps).join(delimiter);
   }
 
   function calcDisplayName() {
@@ -309,7 +311,7 @@
 
     const ghostH = ghost.getBoundingClientRect().height;
     e.dataTransfer.setDragImage(ghost, -12, ghostH + 12);
-    
+
     requestAnimationFrame(() => {
       if (document.body.contains(ghost)) document.body.removeChild(ghost);
     });
