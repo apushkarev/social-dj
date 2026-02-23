@@ -77,5 +77,21 @@ export const icons = {
         </clipPath>
       </defs>
     </svg>
-  `
+  `,
+  edit: `
+    <svg class="iconSVG" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path class="iconPath" d="M11 29.58H26.7145" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="iconPath" d="M19.5715 24.5799L15.2858 25.3514L16.0001 21.0084L25.6145 11.4226C25.7473 11.2887 25.9053 11.1824 26.0794 11.1099C26.2535 11.0373 26.4402 11 26.6288 11C26.8174 11 27.0041 11.0373 27.1782 11.1099C27.3523 11.1824 27.5103 11.2887 27.6431 11.4226L29.1574 12.9369C29.2913 13.0697 29.3976 13.2277 29.4701 13.4018C29.5426 13.5759 29.58 13.7626 29.58 13.9512C29.58 14.1398 29.5426 14.3265 29.4701 14.5006C29.3976 14.6747 29.2913 14.8327 29.1574 14.9655L19.5715 24.5799Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>  
+  `,
+
+  trash: `
+    <svg class="iconSVG" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path class="iconPath warning" d="M11 15.285H28.14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="iconPath warning" d="M13.1425 15.285H25.9975V28.14C25.9975 28.5188 25.847 28.8821 25.5792 29.15C25.3113 29.4178 24.948 29.5683 24.5692 29.5683H14.5709C14.192 29.5683 13.8287 29.4178 13.5609 29.15C13.293 28.8821 13.1425 28.5188 13.1425 28.14V15.285Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="iconPath warning" d="M15.9991 15.285V14.5708C15.9991 13.6238 16.3754 12.7155 17.045 12.0459C17.7147 11.3762 18.6229 11 19.57 11C20.517 11 21.4253 11.3762 22.0949 12.0459C22.7646 12.7155 23.1408 13.6238 23.1408 14.5708V15.285" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="iconPath warning" d="M17.4275 18.1417V25.9975" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="iconPath warning" d="M21.7125 18.1417V25.9975" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>  
+  `,
 };
