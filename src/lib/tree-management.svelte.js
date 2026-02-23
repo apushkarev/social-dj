@@ -1,5 +1,4 @@
 import { globals } from './globals.svelte.js';
-import { t, tLog } from './helpers.svelte.js';
 
 export function generateId() {
   return (Date.now().toString(16) + Math.random().toString(16).slice(2, 8)).toUpperCase();
@@ -21,92 +20,46 @@ export function rebuildIndex(hierarchy) {
   return index;
 }
 
-// Takes plain (snapshotted) { hierarchy, index }, adds a new item under parentFolderId.
-// Returns { newId, newHierarchy, newIndex } or null if parent not found.
-export function addTreeItem({ hierarchy, index }, parentFolderId, type, name) {
-  const parentPath = index[parentFolderId];
-  if (!parentPath) return null;
-
-  const newId = generateId();
-
-  const newItem = type === 'folder'
-    ? { id: newId, type: 'folder', name, parentId: parentFolderId, children: [] }
-    : { id: newId, type: 'playlist', name, parentId: parentFolderId, trackIds: [] };
-
-  let _t = t();
-  const newHierarchy = structuredClone(hierarchy);
-  let parentNode = { children: newHierarchy };
-  for (const i of parentPath) {
-    parentNode = parentNode.children[i];
-  }
-  parentNode.children.push(newItem);
-  tLog('[lib] add item to hierarchy', _t);
-
-  _t = t();
-  const newIndex = rebuildIndex(newHierarchy);
-  tLog('[lib] rebuild index', _t);
-
-  return { newId, newHierarchy, newIndex };
+function saveHierarchy() {
+  const lib = globals.get('library');
+  window.electronAPI.saveHierarchy({
+    hierarchy: lib.hierarchy,
+    index: lib.index,
+  });
 }
 
 // Removes the node with nodeId from the hierarchy, rebuilds index, persists.
-export async function deleteTreeItem(nodeId) {
+export function deleteTreeItem(nodeId) {
   const library = globals.get('library');
-  const path = $state.snapshot(library.index)[nodeId];
+  const path = library.index[nodeId];
   if (!path) return;
 
-
-  // this takes about 180-200ms
-  const newHierarchy = $state.snapshot(library.hierarchy);
-
-  let parent = { children: newHierarchy };
-
-  for (let i = 0; i < path.length - 1; i++) {
-    parent = parent.children[path[i]];
-  }
-  parent.children.splice(path[path.length - 1], 1);
-  let _t = t();
-  tLog('[lib] delete item from hierarchy', _t);
-
-  _t = t();
-  const newIndex = rebuildIndex(newHierarchy);
-  tLog('[lib] rebuild index after delete', _t);
-
-  globals.set('library', {
-    tracks: library.tracks,
-    hierarchy: newHierarchy,
-    index: newIndex,
+  globals.update('library', current => {
+    let parent = { children: current.hierarchy };
+    for (let i = 0; i < path.length - 1; i++) {
+      parent = parent.children[path[i]];
+    }
+    parent.children.splice(path[path.length - 1], 1);
+    current.index = rebuildIndex(current.hierarchy);
+    return current;
   });
 
-  _t = t();
-  window.electronAPI.saveHierarchy({
-    hierarchy: newHierarchy,
-    index: newIndex,
-  });
-  tLog('[lib] save hierarchy.json after delete', _t);
+  saveHierarchy();
 }
 
 // Renames the node with nodeId. Index paths are unaffected by name changes.
-export async function renameTreeItem(nodeId, newName) {
+export function renameTreeItem(nodeId, newName) {
   const library = globals.get('library');
-  const path = $state.snapshot(library.index)[nodeId];
+  const path = library.index[nodeId];
   if (!path) return;
 
-  let _t = t();
-  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
-  let node = { children: newHierarchy };
-  for (const i of path) {
-    node = node.children[i];
-  }
-  node.name = newName;
-  tLog('[lib] rename item in hierarchy', _t);
-
-  const indexSnapshot = $state.snapshot(library.index);
-
-  globals.set('library', {
-    tracks: library.tracks,
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
+  globals.update('library', current => {
+    let node = { children: current.hierarchy };
+    for (const i of path) {
+      node = node.children[i];
+    }
+    node.name = newName;
+    return current;
   });
 
   // Keep selectedFolderView name in sync
@@ -115,109 +68,76 @@ export async function renameTreeItem(nodeId, newName) {
     globals.set('selectedFolderView', { ...folderView, name: newName });
   }
 
-  _t = t();
-  window.electronAPI.saveHierarchy({
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
-  });
-  tLog('[lib] save hierarchy.json after rename', _t);
+  saveHierarchy();
 }
 
 // Removes trackIds from a playlist node. Persists hierarchy.json.
 export function removeTracksFromPlaylist(playlistId, trackIds) {
   const library = globals.get('library');
-  const path = $state.snapshot(library.index)[playlistId];
+  const path = library.index[playlistId];
   if (!path) return;
 
-  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
-  let node = { children: newHierarchy };
-  for (const i of path) {
-    node = node.children[i];
-  }
+  globals.update('library', current => {
+    let node = { children: current.hierarchy };
+    for (const i of path) {
+      node = node.children[i];
+    }
+    if (node.type !== 'playlist') return current;
 
-  if (node.type !== 'playlist') return;
-
-  const toRemove = new Set(trackIds.map(String));
-  node.trackIds = node.trackIds.filter(id => !toRemove.has(String(id)));
-
-  const indexSnapshot = $state.snapshot(library.index);
-
-  globals.set('library', {
-    tracks: library.tracks,
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
+    const toRemove = new Set(trackIds.map(String));
+    node.trackIds = node.trackIds.filter(id => !toRemove.has(String(id)));
+    return current;
   });
 
-  window.electronAPI.saveHierarchy({
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
-  });
+  saveHierarchy();
 }
 
 // Appends unique trackIds to a playlist node. Persists hierarchy.json.
 export function addTracksToPlaylist(playlistId, trackIds) {
   const library = globals.get('library');
-  const path = $state.snapshot(library.index)[playlistId];
+  const path = library.index[playlistId];
   if (!path) return;
 
-  const newHierarchy = structuredClone($state.snapshot(library.hierarchy));
-  let node = { children: newHierarchy };
-  for (const i of path) {
-    node = node.children[i];
-  }
+  globals.update('library', current => {
+    let node = { children: current.hierarchy };
+    for (const i of path) {
+      node = node.children[i];
+    }
+    if (node.type !== 'playlist') return current;
 
-  if (node.type !== 'playlist') return;
-
-  const existing = new Set(node.trackIds.map(String));
-  const toAdd = trackIds.filter(id => !existing.has(String(id)));
-  if (!toAdd.length) return;
-
-  node.trackIds = [...node.trackIds, ...toAdd];
-
-  const indexSnapshot = $state.snapshot(library.index);
-
-  globals.set('library', {
-    tracks: library.tracks,
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
+    const existing = new Set(node.trackIds.map(String));
+    const toAdd = trackIds.filter(id => !existing.has(String(id)));
+    if (toAdd.length) node.trackIds.push(...toAdd);
+    return current;
   });
 
-  window.electronAPI.saveHierarchy({
-    hierarchy: newHierarchy,
-    index: indexSnapshot,
-  });
+  saveHierarchy();
 }
 
-// Updates globals.library and persists library.json.
+// Adds a new item under parentFolderId, updates globals, persists.
 // Returns { newId, newHierarchy, newIndex } or null if parent not found.
-export async function createTreeItem(parentFolderId, type, name) {
+export function createTreeItem(parentFolderId, type, name) {
   const library = globals.get('library');
+  const parentPath = library.index[parentFolderId];
+  if (!parentPath) return null;
 
-  const result = addTreeItem(
-    {
-      hierarchy: $state.snapshot(library.hierarchy),
-      index: $state.snapshot(library.index),
-    },
-    parentFolderId,
-    type,
-    name,
-  );
-  if (!result) return null;
+  const newId = generateId();
+  const newItem = type === 'folder'
+    ? { id: newId, type: 'folder', name, parentId: parentFolderId, children: [] }
+    : { id: newId, type: 'playlist', name, parentId: parentFolderId, trackIds: [] };
 
-  const { newId, newHierarchy, newIndex } = result;
-
-  globals.set('library', {
-    tracks: library.tracks,
-    hierarchy: newHierarchy,
-    index: newIndex,
+  globals.update('library', current => {
+    let parentNode = { children: current.hierarchy };
+    for (const i of parentPath) {
+      parentNode = parentNode.children[i];
+    }
+    parentNode.children.push(newItem);
+    current.index = rebuildIndex(current.hierarchy);
+    return current;
   });
 
-  const _t = t();
-  window.electronAPI.saveHierarchy({
-    hierarchy: newHierarchy,
-    index: newIndex,
-  });
-  tLog('[lib] save hierarchy.json', _t);
+  saveHierarchy();
 
-  return { newId, newHierarchy, newIndex };
+  const lib = globals.get('library');
+  return { newId, newHierarchy: lib.hierarchy, newIndex: lib.index };
 }
