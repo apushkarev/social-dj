@@ -8,11 +8,13 @@
   let selectedFolderView = $derived(globals.get('selectedFolderView'));
 
   let selectedTrackIds = $state(new Set());
+  let anchorTrackId = $state(null);
 
   $effect(() => {
     selectedPlaylistId;
     selectedFolderView;
     selectedTrackIds = new Set();
+    anchorTrackId = null;
   });
 
   const CYCLE = [
@@ -50,14 +52,27 @@
   }
 
   function handleRowClick(e, trackId) {
-    if (e.metaKey || e.ctrlKey) {
+    if (e.shiftKey && anchorTrackId) {
+      e.preventDefault();
+      const anchorIdx = tracks.findIndex(t => t.trackId === anchorTrackId);
+      const clickIdx  = tracks.findIndex(t => t.trackId === trackId);
+      if (anchorIdx !== -1 && clickIdx !== -1) {
+        const lo = Math.min(anchorIdx, clickIdx);
+        const hi = Math.max(anchorIdx, clickIdx);
+        selectedTrackIds = new Set(tracks.slice(lo, hi + 1).map(t => t.trackId));
+      }
+      // anchor stays fixed so further shift+clicks extend from the same point
+    } else if (e.metaKey || e.ctrlKey) {
       const next = new Set(selectedTrackIds);
       if (next.has(trackId)) next.delete(trackId); else next.add(trackId);
       selectedTrackIds = next;
+      anchorTrackId = trackId;
     } else if (selectedTrackIds.has(trackId)) {
       selectedTrackIds = new Set();
+      anchorTrackId = null;
     } else {
       selectedTrackIds = new Set([trackId]);
+      anchorTrackId = trackId;
     }
   }
 
