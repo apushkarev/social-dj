@@ -1,5 +1,49 @@
 <script>
+  const MARGIN = 8;
+
   let { x, y, visible = $bindable(false), onclose = undefined, children } = $props();
+
+  let modalEl = $state();
+  let adjustedX = $state(x);
+  let adjustedY = $state(y);
+  let positioned = $state(false);
+
+  $effect(() => {
+    const nx = x;
+    const ny = y;
+
+    if (visible) {
+      positioned = false;
+      adjustedX = nx;
+      adjustedY = ny;
+
+      requestAnimationFrame(() => {
+        if (!modalEl) return;
+
+        const { width, height } = modalEl.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        let ax = nx;
+        let ay = ny;
+
+        // Right edge
+        if (ax + width > vw - MARGIN) ax = vw - width - MARGIN;
+        // Left edge
+        if (ax < MARGIN) ax = MARGIN;
+        // Bottom edge
+        if (ay + height > vh - MARGIN) ay = vh - height - MARGIN;
+        // Top edge
+        if (ay < MARGIN) ay = MARGIN;
+
+        adjustedX = ax;
+        adjustedY = ay;
+        positioned = true;
+      });
+    } else {
+      positioned = false;
+    }
+  });
 
   function handleBackdropClick() {
     visible = false;
@@ -14,7 +58,13 @@
 
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="modal" style="left: {x}px; top: {y}px;" onclick={e => e.stopPropagation()}>
+  <div
+    bind:this={modalEl}
+    class="modal"
+    class:positioned
+    style="left: {adjustedX}px; top: {adjustedY}px;"
+    onclick={e => e.stopPropagation()}
+  >
     {@render children()}
   </div>
 {/if}
@@ -35,5 +85,11 @@
     border-radius: var(--brad2);
     padding: 1.25em;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transition: opacity var(--td-100);
+  }
+
+  .modal.positioned {
+    opacity: 1;
   }
 </style>
