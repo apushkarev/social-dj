@@ -30,7 +30,18 @@
 
     let prev = selectedItem;
 
-    selectedItem = selectedItem === id ? prevSelectedItem : id;
+    if (selectedItem == 'settings' && id == 'settings') {
+
+      selectedItem = prevSelectedItem;
+    
+    } else if (selectedItem != 'settings' && selectedItem == id) {
+
+      selectedItem = null;
+    
+    } else if (selectedItem != id) {
+
+      selectedItem = id;
+    }
 
     globals.set('prev-sidebar-selected-item', prev);
   }
