@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
@@ -116,6 +116,22 @@ ipcMain.handle('save-hierarchy', (_event, data) => {
   } catch (err) {
     return { success: false, error: err.message };
   }
+});
+
+const DRAG_ICON = nativeImage.createFromPath(
+  resolve(__dirname, '..', 'public', 'drag_image.png')
+);
+
+ipcMain.on('start-file-drag', (event, fileUrlPaths) => {
+  const filePaths = fileUrlPaths.map(url => {
+    try { return fileURLToPath(url); } catch { return null; }
+  }).filter(Boolean);
+
+  if (filePaths.length) {
+    try { event.sender.startDrag({ files: filePaths, icon: DRAG_ICON }); } catch {}
+  }
+
+  event.returnValue = null;
 });
 
 ipcMain.on('write-app-state', (_event, data) => {

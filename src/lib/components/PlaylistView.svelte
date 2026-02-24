@@ -4,7 +4,6 @@
   import { dragStore } from '../drag-state.svelte.js';
   import { removeTracksFromPlaylist } from '../tree-management.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
-  import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
 
   let library            = $derived(globals.get('library'));
@@ -240,68 +239,69 @@
 
   function createDragGhost(count) {
     const cs = getComputedStyle(document.documentElement);
-    const bg2 = cs.getPropertyValue('--bg2').trim();
-    const border3 = cs.getPropertyValue('--border3').trim();
-    const fg2s = cs.getPropertyValue('--fg2-s').trim();
     const yellow = cs.getPropertyValue('--yellow-warm').trim();
 
-    const orderOfMagnitude = Math.floor(Math.log10(count));
-    const badgeSize = orderOfMagnitude * 4 + 24;
-    const badgeOffset = -10 - orderOfMagnitude * 2;
-
     const el = document.createElement('div');
+    el.id = 'drag-badge';
     el.style.cssText = [
       'position: fixed',
       'top: -1000px',
       'left: -1000px',
-      'display: flex',
-      'align-items: center',
-      'padding: 20px 24px',
-      `background: ${bg2}`,
-      `border: 1px solid ${border3}`,
-      'border-radius: 8px',
-      `color: ${fg2s}`,
-      'font-family: inherit',
-      'font-size: 15px',
-      'box-shadow: 0 4px 16px rgba(0,0,0,0.5)',
+      'z-index: 9999',
       'pointer-events: none',
-      'white-space: nowrap',
+      'display: inline-flex',
+      'align-items: center',
+      'justify-content: center',
+      `background: ${yellow}`,
+      'color: #1a1a1a',
+      'border-radius: 12px',
+      'font-size: 13px',
+      'font-weight: 700',
+      'min-width: 22px',
+      'height: 22px',
+      'padding: 0 6px',
+      'box-sizing: border-box',
+      'box-shadow: 0 2px 8px rgba(0,0,0,0.5)',
+      'font-family: inherit',
+      'user-select: none',
     ].join(';');
-
-    el.innerHTML = `
-      <span
-        style="
-          display: flex;
-          align-items: center;
-          scale: 3;
-        "
-      >${icons.playlistBig}</span>
-      <span
-        style="
-          position: absolute;
-
-          top: ${badgeOffset}px;
-          right: ${badgeOffset}px;
-
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          background: ${yellow};
-          color: #1a1a1a;
-          border-radius: 50%;
-          padding: 1px 8px;
-          font-size: 16px;
-          font-weight: 700;
-          min-width: ${badgeSize}px;
-          width: ${badgeSize}px;
-          height: ${badgeSize}px;
-        ">${count}</span>
-    `;
-
+    el.textContent = count;
     return el;
   }
 
+  let dragGhostEl = null;
+  let _dragActive  = false;
+
+  function handleDragMove(e) {
+    if (!dragGhostEl) return;
+    dragGhostEl.style.left    = `${e.clientX + 32}px`;
+    dragGhostEl.style.top     = `${e.clientY - 36}px`;
+    dragGhostEl.style.display = 'inline-flex';
+  }
+
+  function handleDragLeaveWindow(e) {
+    if (dragGhostEl && !e.relatedTarget) dragGhostEl.style.display = 'none';
+  }
+
+  function cleanupDrag() {
+    _dragActive = false;
+    document.removeEventListener('dragover',  handleDragMove,        true);
+    document.removeEventListener('dragleave', handleDragLeaveWindow);
+    document.removeEventListener('mouseup',   cleanupDrag,           true);
+    window.removeEventListener('pointerup',   cleanupDrag);
+    dragGhostEl?.remove();
+    dragGhostEl = null;
+    dragStore.end();
+  }
+
   function handleDragStart(e, track) {
+    // Always prevent HTML5 drag — we use native startDrag instead
+    e.preventDefault();
+
+    // Re-entrancy guard: browser re-fires dragstart on every mousemove when
+    // the previous dragstart was preventDefault-ed; only start once per gesture
+    if (_dragActive) return;
+    _dragActive = true;
 
     const ids = selectedTrackIds.has(track.trackId)
       ? [...selectedTrackIds]
@@ -309,22 +309,29 @@
 
     dragStore.start(ids, selectedPlaylistId ?? null);
 
-    e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('text/plain', JSON.stringify(ids));
+    // Native file drag
+    const fileLocations = ids
+      .map(id => library?.tracks[String(id)]?.location)
+      .filter(Boolean);
+    if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
 
-    const ghost = createDragGhost(ids.length);
-    document.body.appendChild(ghost);
+    // Badge ghost for in-app visual feedback
+    // (macOS shows its own native file-count badge, so this is redundant there;
+    //  kept here for potential use on other platforms)
+    // dragGhostEl = createDragGhost(ids.length);
+    // dragGhostEl.style.left = `${e.clientX + 14}px`;
+    // dragGhostEl.style.top  = `${e.clientY + 14}px`;
+    // document.body.appendChild(dragGhostEl);
+    // document.addEventListener('dragover',  handleDragMove, true);
+    // document.addEventListener('dragleave', handleDragLeaveWindow);
 
-    const ghostH = ghost.getBoundingClientRect().height;
-    e.dataTransfer.setDragImage(ghost, -12, ghostH + 12);
-
-    requestAnimationFrame(() => {
-      if (document.body.contains(ghost)) document.body.removeChild(ghost);
-    });
+    // Cleanup listeners — always needed to reset _dragActive after drag ends
+    document.addEventListener('mouseup',  cleanupDrag, true);
+    window.addEventListener('pointerup',  cleanupDrag);
   }
 
   function handleDragEnd() {
-    dragStore.end();
+    cleanupDrag();
   }
 
   function handleTrackContextMenu(e, track) {
