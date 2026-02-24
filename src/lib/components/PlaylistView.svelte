@@ -166,11 +166,13 @@
     return names;
   }
 
+  const branchSteps = $state(3);
+  const delimiter = $state(' • ');
+
   // Shows last 3 nodes; prefixes with '... / ' when path is deeper.
   function formatBreadcrumb(names) {
 
     const branchSteps = 3;
-    // const delimiter = ' / ';
     const delimiter = ' • ';
 
     if (!names || names.length === 0) return null;
@@ -179,30 +181,34 @@
     return '...' + delimiter + names.slice(-branchSteps).join(delimiter);
   }
 
-  function calcDisplayName() {
+  function calcBreadcrumbs() {
+
+    let names = [];
 
     if (selectedFolderView) {
       
-      const names = getBreadcrumbPath(library, selectedFolderView.id);
-      if (names) return formatBreadcrumb(names);
+      names = getBreadcrumbPath(library, selectedFolderView.id);
 
-      return selectedFolderView.name;
+      if (names) return names.slice(-branchSteps);
+
+      return [selectedFolderView.name];
     }
     if (playlist?.type === 'playlist') {
 
-      const names = getBreadcrumbPath(library, selectedPlaylistId);
-      if (names) return formatBreadcrumb(names);
+      names = getBreadcrumbPath(library, selectedPlaylistId);
 
-      return playlist.name;
+      if (names) return names.slice(-branchSteps);
+
+      return [playlist.name];
     }
 
-    return null;
+    return [];
   }
 
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
 
   // Effective view: folder aggregation takes priority over single playlist
-  let displayName = $derived(calcDisplayName());
+  let breadcrumbs = $derived(calcBreadcrumbs());
 
   let activeTrackIds = $derived(
     selectedFolderView?.trackIds
@@ -356,11 +362,21 @@
   }
 </script>
 
-{#if displayName && library}
+{#if breadcrumbs && library}
   <div class="playlist-view" style="--num-col-width: {numColWidth}">
 
     <div class="playlist-header">
-      <h1 class="playlist-title">{displayName}</h1>
+
+      <h1 class="playlist-title">...</h1>
+      <h1 class="playlist-title delimiter">{delimiter}</h1>
+
+      {#each breadcrumbs as breadcrumb, index}
+        <h1 class="playlist-title">{breadcrumb}</h1>
+        {#if index < breadcrumbs.length - 1}
+          <h1 class="playlist-title delimiter">{delimiter}</h1>
+        {/if}
+      {/each}
+
     </div>
 
     <div class="track-scroll">
@@ -431,13 +447,21 @@
     flex-shrink: 0;
     padding: 1em 2em 0.875em;
     border-bottom: 1px solid var(--border2);
+
+    display: flex;
+    gap: 0.75em;
   }
 
   .playlist-title {
+
     margin: 0;
-    font-size: 1.5em;
-    font-weight: 600;
+    font-size: 1.25em;
+    font-weight: 500;
     color: var(--fg2);
+  }
+
+  .playlist-title.delimiter {
+    color: var(--yellow-warm-80);
   }
 
   .track-scroll {
@@ -522,10 +546,11 @@
     width: 2rem;
     display: flex;
     align-items: center;
+    justify-content: center;
   }
 
   .col-bpm {
-    width: 3rem;
+    width: 2rem;
     text-align: right;
     color: var(--fg1);
   }

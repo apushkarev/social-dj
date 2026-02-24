@@ -53,6 +53,7 @@ export const ds = {
   '--overlay1': 'rgba(255, 255, 255, 0.05)',
   '--overlay2': 'rgba(255, 255, 255, 0.1)',
   '--overlay3': 'rgba(255, 255, 255, 0.25)',
+  '--overlay4': 'rgba(255, 255, 255, 0.4)',
   '--overlay5': 'rgba(255, 255, 255, 0.5)',
 
   /* Borders */

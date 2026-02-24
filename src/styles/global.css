@@ -31,13 +31,13 @@ body {
 
 ::-webkit-scrollbar-thumb {
   cursor: pointer;
-  background: var(--yellow-warm-80);
+  background: var(--overlay2);
   border-radius: 2px;
   transition-duration: var(--td-100);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--yellow-warm);
+  background: var(--yellow-warm-50);
   
 }
 

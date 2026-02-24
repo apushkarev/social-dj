@@ -338,7 +338,7 @@
 
   .tree-scroll.root-drag-over {
     /* box-shadow: inset 0 -3px 0 var(--meadow-green); */
-    outline: 2px solid var(--meadow-green);
+    outline: 2px solid var(--meadow-green-50);
     outline-offset: -2px;
     border-radius: var(--brad1);
   }
