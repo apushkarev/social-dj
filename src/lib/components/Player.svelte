@@ -165,7 +165,7 @@
     position: absolute;
     right: 0;
     bottom: 6px;
-    font-size: 0.65em;
+    font-size: 0.75em;
     color: var(--fg2);
     pointer-events: none;
     opacity: 1;
@@ -175,7 +175,6 @@
   .playbar-column.is-hovered .time-remaining-min {
     opacity: 0;
     bottom: 12px;
-    font-size: 0.75em;
   }
 
   .time-row {
