@@ -189,7 +189,7 @@
     pointer-events: none;
     opacity: 0;
     transition: opacity var(--td-150);
-    margin-bottom: 0.5em;
+    margin-bottom: 0.75em;
 
     text-shadow: var(--txs);
   }
