@@ -167,6 +167,7 @@ ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
   }
 });
 
+app.setName('Social DJ');
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

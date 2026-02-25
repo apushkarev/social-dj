@@ -1,5 +1,6 @@
 {
   "name": "statement-dj",
+  "productName": "Social DJ",
   "version": "0.1.0",
   "description": "Music library manager",
   "main": "electron/main.js",
