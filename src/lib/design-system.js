@@ -104,7 +104,10 @@ export const ds = {
   '--brad3': '16px',
   '--brad4': '22px',
 
-  '--bxs': '0 4px 32px rgba(0, 0, 0, 0.2)'
+  '--bxs': '0 4px 32px rgba(0, 0, 0, 0.2)',
+  '--txs': '0 1px 2px rgba(0, 0, 0, 1)',
+
+  '--titlebar-height': '56px'
 };
 
 export const initializeDesignSystem = () => {

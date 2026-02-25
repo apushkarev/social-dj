@@ -5,6 +5,8 @@
   import PlaylistView from './lib/components/PlaylistView.svelte';
   import { globals } from './lib/globals.svelte.js';
   import ContextMenu from './lib/components/ContextMenu.svelte';
+  import Player from './lib/components/Player.svelte';
+  import MainVolume from './lib/components/MainVolume.svelte';
   import { saveAppState } from './lib/app-state.svelte.js';
 
   const stored = globals.get('sidebar-selected-item');
@@ -79,7 +81,15 @@
 </script>
 
 <ContextMenu />
-<div class="titlebar"></div>
+<div class="titlebar">
+  <div class="titlebar-left"></div>
+  <div class="titlebar-center">
+    <Player />
+  </div>
+  <div class="titlebar-right">
+    <MainVolume />
+  </div>
+</div>
 <div class="app-layout">
   <Sidebar {selectedItem} onselect={handleSelectSidebarModule} />
   <div
@@ -108,19 +118,46 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 38px;
+    height: var(--titlebar-height);
     -webkit-app-region: drag;
     z-index: 100;
 
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border2);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .titlebar-left {
+    width: 80px;
+    flex-shrink: 0;
+    height: 100%;
+  }
+
+  .titlebar-center {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding-left: 56px;
+    box-sizing: border-box;
+  }
+
+  .titlebar-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 1.5em;
   }
 
   .app-layout {
     display: flex;
     width: 100%;
-    height: calc(100% - 38px);
-    margin-top: 38px;
+    height: calc(100% - var(--titlebar-height));
+    margin-top: var(--titlebar-height);
   }
 
   .tree-wrapper {
