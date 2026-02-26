@@ -169,7 +169,7 @@
     color: var(--fg2);
     pointer-events: none;
     opacity: 1;
-    transition: opacity var(--td-150);
+    transition: opacity var(--td-150) ease-out;
   }
 
   .playbar-column.is-hovered .time-remaining-min {
@@ -188,8 +188,8 @@
     letter-spacing: 0.02em;
     pointer-events: none;
     opacity: 0;
-    transition: opacity var(--td-150);
-    margin-bottom: 0.75em;
+    transition: opacity var(--td-150) ease-out;
+    margin-bottom: 0.5em;
 
     text-shadow: var(--txs);
   }
