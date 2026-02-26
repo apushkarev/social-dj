@@ -522,6 +522,10 @@
     border-radius: var(--brad2);
   }
 
+  .data-row:nth-child(2n+2) {
+    background-color: var(--overlay0);
+  }
+
   .data-row:hover {
     background-color: var(--overlay1);
   }
