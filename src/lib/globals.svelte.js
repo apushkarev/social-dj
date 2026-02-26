@@ -7,7 +7,15 @@ let globalStorage = $state({
   // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
   selectedFolderView: null,
 
+  audio: {
+    header: null // apple music default mode, single output or pre-audition
+  },
+
   // Persisted — populated from app-state.json on init, saved on every change
+  'volume': {
+    "header": 0.5
+  },
+
   'sidebar-selected-item': null,
   'prev-sidebar-selected-item': null,
   
