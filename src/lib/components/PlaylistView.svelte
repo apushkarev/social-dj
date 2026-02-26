@@ -728,6 +728,10 @@
     width: 16rem;
   }
 
+  .header-row .col-title {
+    width: 21.6em;
+  }
+
   .col-time {
     width: 4rem;
     text-align: right;
