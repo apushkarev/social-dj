@@ -44,6 +44,13 @@
     return () => globals.update('audio', a => ({ ...a, header: null }));
   });
 
+  function handleLoadStart() {
+
+    duration = 0;
+    currentTime = 0;
+    playbarProgress = 0;
+  }
+
   function handleTimeUpdate() {
 
     const t = audioEl.currentTime;
@@ -60,14 +67,19 @@
     if (isFinite(t)) currentTime = t;
   }
 
+  // Fallback for formats that report NaN duration in loadedmetadata
+  // and only resolve it later via durationchange (e.g. VBR MP3).
+  function handleDurationChange() {
+
+    const d = audioEl.duration;
+
+    if (isFinite(d)) duration = d;
+  }
+
   function loadTrack(trackId, autoplay = true) {
 
     const track = library?.tracks?.[String(trackId)];
     if (!track?.location) return;
-
-    duration = 0;
-    currentTime = 0;
-    playbarProgress = 0;
 
     globals.set('currentlyPlayingTrackId', trackId);
     audioEl.src = toMediaUrl(track.location);
@@ -226,7 +238,9 @@
   onpause={() => isPlaying = false}
   onended={handleEnded}
   ontimeupdate={handleTimeUpdate}
+  onloadstart={handleLoadStart}
   onloadedmetadata={handleLoadedMetadata}
+  ondurationchange={handleDurationChange}
 ></audio>
 
 <div class="player">

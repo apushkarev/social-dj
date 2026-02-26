@@ -70,13 +70,17 @@
   function handleRowDblClick(trackId) {
 
     const track = library?.tracks[String(trackId)];
-    const audio = globals.get('audio')?.header;
+    if (!track?.location) return;
 
-    if (!track?.location || !audio) return;
+    // Delegate to HeaderPlayer's loadTrack via the registered action on the audio globals.
+    // This ensures duration/currentTime/playbarProgress are reset correctly.
+    const headerAudio = globals.get('audio')?.header;
+    if (!headerAudio) return;
 
     globals.set('currentlyPlayingTrackId', trackId);
-    audio.src = toMediaUrl(track.location);
-    audio.play().catch(() => {});
+    headerAudio.src = toMediaUrl(track.location);
+    headerAudio.load();
+    headerAudio.play().catch(() => {});
   }
 
   function handleRowClick(e, trackId) {
