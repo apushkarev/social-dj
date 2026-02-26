@@ -42,7 +42,7 @@
 
 <style>
   .input-field {
-    background-color: var(--overlay0);
+    background-color: var(--overlay1);
     border: 1px solid var(--border2);
     border-radius: var(--brad1);
     color: var(--fg4);

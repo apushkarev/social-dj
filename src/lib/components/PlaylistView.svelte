@@ -448,6 +448,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    padding-right: 0.5em;
   }
 
   .playlist-header {
@@ -523,15 +525,16 @@
   }
 
   .data-row:nth-child(2n+2) {
-    background-color: var(--overlay0);
+    background-color: var(--overlay1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.025);
   }
 
   .data-row:hover {
-    background-color: var(--overlay1);
+    background-color: var(--overlay3);
   }
 
   .data-row.selected {
-    background-color: var(--overlay2);
+    background-color: var(--overlay5);
   }
 
   .col {

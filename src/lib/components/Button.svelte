@@ -13,7 +13,7 @@
     align-self: flex-start;
     padding: 0.5em 1em;
     box-sizing: border-box;
-    background: var(--overlay1);
+    background: var(--overlay3);
     border: 1px solid var(--border2);
     border-radius: var(--brad1);
     color: var(--fg2-5);
@@ -23,12 +23,12 @@
   }
 
   .button:hover {
-    background: var(--overlay2);
+    background: var(--overlay5);
     border-color: var(--border3);
     color: var(--fg5);
   }
 
   .button:active {
-    background: var(--overlay1);
+    background: var(--overlay3);
   }
 </style>

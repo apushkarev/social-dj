@@ -326,7 +326,7 @@
   }
 
   .node-row:hover, .node-row.folder:hover {
-    background-color: var(--overlay1);
+    background-color: var(--overlay3);
   }
 
   .node-row.selected, .node-row.folder.selected {
@@ -453,7 +453,7 @@
   .children:global(.depth-color-2)::before { background-color: var(--meadow-green-50); }
   .children:global(.depth-color-3)::before { background-color: var(--mint-50); }
   .children:global(.depth-color-4)::before { background-color: var(--cornflower-blue-50); }
-  .children:global(.depth-color-5)::before { background-color: var(--overlay4); }
+  .children:global(.depth-color-5)::before { background-color: var(--overlay7); }
 
   /* .children:global(.depth-color-0)::before { background-color: var(--red-50); }
   .children:global(.depth-color-1)::before { background-color: var(--bristol-orange-50); }

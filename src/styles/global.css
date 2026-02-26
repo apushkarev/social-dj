@@ -21,8 +21,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -31,13 +31,13 @@ body {
 
 ::-webkit-scrollbar-thumb {
   cursor: pointer;
-  background: var(--overlay2);
-  border-radius: 2px;
+  background: var(--overlay6);
+  border-radius: 4px;
   transition-duration: var(--td-100);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--yellow-warm-50);
+  background: var(--yellow-warm-80);
   
 }
 

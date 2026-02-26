@@ -243,7 +243,7 @@
     height: 2em;
     border: 1px solid var(--border2);
     border-radius: var(--brad1);
-    background-color: var(--overlay0);
+    background-color: var(--overlay1);
     color: var(--fg3);
     font-size: 1em;
     font-family: inherit;
@@ -252,6 +252,6 @@
   }
 
   .step-btn:hover {
-    background-color: var(--overlay2);
+    background-color: var(--overlay5);
   }
 </style>
