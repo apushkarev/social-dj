@@ -5,6 +5,7 @@
   import IconButton from './IconButton.svelte';
   import { globals } from '../globals.svelte.js';
   import { formatTime, toMediaUrl, toAudioVolume } from '../helpers.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
 
   const PLAYBAR_WIDTH = 400;
 
@@ -17,6 +18,7 @@
 
   let audioEl = $state();
   let playbarEl = $state();
+  let preMuteVolume = $state(null);
 
   let library = $derived(globals.get('library'));
   let playingTrackId = $derived(globals.get('currentlyPlayingTrackId'));
@@ -162,6 +164,59 @@
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     playbarProgress = x / rect.width;
   }
+
+  function toggleMute() {
+
+    const current = globals.get('volume')?.header ?? 0.5;
+
+    if (current > 0) {
+      preMuteVolume = current;
+      globals.update('volume', v => ({ ...v, header: 0 }));
+    } else {
+      globals.update('volume', v => ({ ...v, header: preMuteVolume ?? 0.5 }));
+      preMuteVolume = null;
+    }
+
+    saveAppState();
+  }
+
+  $effect(() => {
+
+    function handleKeyDown(e) {
+
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target?.isContentEditable) return;
+
+      const cmdOrCtrl = e.metaKey || e.ctrlKey;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlayPause();
+        return;
+      }
+
+      if (cmdOrCtrl && e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleNext();
+        return;
+      }
+
+      if (cmdOrCtrl && e.key === 'ArrowUp') {
+        e.preventDefault();
+        handlePrev();
+        return;
+      }
+
+      if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        toggleMute();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  });
 
 </script>
 
