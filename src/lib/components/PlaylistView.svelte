@@ -118,7 +118,7 @@
         const lo = Math.min(anchorIdx, clickIdx);
         const hi = Math.max(anchorIdx, clickIdx);
 
-        selectedTrackIds = new Set(tracks.slice(lo, hi + 1).map(t => t.trackId));
+        selectedTrackIds = new Set(sortedTracks.slice(lo, hi + 1).map(t => t.trackId));
       }
       // anchor stays fixed so further shift+clicks extend from the same point
 
