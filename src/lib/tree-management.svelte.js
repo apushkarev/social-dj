@@ -176,6 +176,31 @@ export function moveTreeNode(nodeId, targetFolderId) {
   saveHierarchy();
 }
 
+// Replaces trackIds on a playlist node with a new ordered array. Persists hierarchy.json.
+export function reorderTracksInPlaylist(playlistId, newTrackIds) {
+
+  const library = globals.get('library');
+  const path = library.index[playlistId];
+  if (!path) return;
+
+  globals.update('library', current => {
+
+    let node = { children: current.hierarchy };
+
+    for (const i of path) {
+      node = node.children[i];
+    }
+
+    if (node.type !== 'playlist') return current;
+
+    node.trackIds = newTrackIds;
+
+    return current;
+  });
+
+  saveHierarchy();
+}
+
 // Sets sortColumn and sortDirection on a node. Persists hierarchy.json.
 export function setNodeSort(nodeId, sortColumn, sortDirection) {
 

@@ -2,7 +2,7 @@
   import { globals } from '../globals.svelte.js';
   import { colorTags } from '../color-tags.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
-  import { removeTracksFromPlaylist, setNodeSort } from '../tree-management.svelte.js';
+  import { removeTracksFromPlaylist, setNodeSort, reorderTracksInPlaylist } from '../tree-management.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
   import { toMediaUrl } from '../helpers.svelte.js';
   import { getSortedTracks, nextSortDirection, TAG_CYCLE } from '../sort.js';
@@ -11,6 +11,7 @@
 
   let library            = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
+  $inspect(selectedPlaylistId)
   let selectedFolderView = $derived(globals.get('selectedFolderView'));
 
   let selectedTrackIds = $state(new Set());
@@ -19,6 +20,17 @@
   let playingTrackId = $derived(globals.get('currentlyPlayingTrackId'));
 
   let clickTimer = null;
+
+  // Reorder drag state
+  let reorderActive = $state(false);
+  let reorderDropIndex = $state(null);
+  let trackScrollEl = $state(null);
+
+  let _reorderPending = false;
+  let _reorderStartX = 0;
+  let _reorderStartY = 0;
+  let _reorderIds = [];
+  let reorderGhostEl = null;
 
   $effect(() => {
     selectedPlaylistId;
@@ -252,6 +264,14 @@
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
 
+  // num/ascending IS the original order — don't treat it as a sort that blocks reordering
+  let isSorted = $derived(
+    sortColumn !== null &&
+    sortDirection !== 0 &&
+    !(sortColumn === 'num' && sortDirection === 1)
+  );
+  let isReorderAllowed = $derived(!isSorted && !!selectedPlaylistId && !selectedFolderView);
+
   // Effective view: folder aggregation takes priority over single playlist
   let breadcrumbs = $derived(calcBreadcrumbs());
 
@@ -340,9 +360,129 @@
     dragStore.end();
   }
 
+  function getDropIndexFromY(clientY) {
+
+    const rows = trackScrollEl.querySelectorAll('.data-row');
+    let dropIndex = rows.length;
+
+    for (let i = 0; i < rows.length; i++) {
+      const rect = rows[i].getBoundingClientRect();
+
+      if (clientY < rect.top + rect.height / 2) {
+        dropIndex = i;
+        break;
+      }
+    }
+
+    return dropIndex;
+  }
+
+  function computeReorderedIds(visualIds, movedIds, dropIndex) {
+
+    const movedSet = new Set(movedIds.map(String));
+
+    const insertIndex = visualIds
+      .slice(0, dropIndex)
+      .filter(id => !movedSet.has(String(id))).length;
+
+    const remaining = visualIds.filter(id => !movedSet.has(String(id)));
+    const orderedMoved = visualIds.filter(id => movedSet.has(String(id)));
+
+    return [
+      ...remaining.slice(0, insertIndex),
+      ...orderedMoved,
+      ...remaining.slice(insertIndex),
+    ];
+  }
+
+  function cleanupReorderState() {
+
+    _reorderPending = false;
+    reorderActive = false;
+    reorderDropIndex = null;
+    reorderGhostEl?.remove();
+    reorderGhostEl = null;
+
+    document.removeEventListener('pointermove', handleReorderPointerMove);
+    document.removeEventListener('pointerup', handleReorderPointerUp);
+    document.removeEventListener('pointercancel', handleReorderPointerUp);
+  }
+
+  function handleRowPointerDown(e, track) {
+
+    if (e.button !== 0) return;
+
+    _reorderPending = true;
+    _reorderStartX = e.clientX;
+    _reorderStartY = e.clientY;
+
+    _reorderIds = selectedTrackIds.has(track.trackId)
+      ? sortedTracks.filter(t => selectedTrackIds.has(t.trackId)).map(t => t.trackId)
+      : [track.trackId];
+
+    document.addEventListener('pointermove', handleReorderPointerMove);
+    document.addEventListener('pointerup', handleReorderPointerUp);
+    document.addEventListener('pointercancel', handleReorderPointerUp);
+  }
+
+  function handleReorderPointerMove(e) {
+
+    if (!_reorderPending && !reorderActive) return;
+
+    const dx = e.clientX - _reorderStartX;
+    const dy = e.clientY - _reorderStartY;
+
+    if (!reorderActive && Math.sqrt(dx * dx + dy * dy) > 4) {
+
+      reorderActive = true;
+
+      reorderGhostEl = document.createElement('img');
+      reorderGhostEl.src = './drag_image.png';
+      reorderGhostEl.style.cssText = [
+        'position: fixed',
+        'pointer-events: none',
+        'z-index: 9999',
+        'width: 48px',
+        'height: 48px',
+        'object-fit: contain',
+        'opacity: 0.85',
+        'top: -1000px',
+        'left: -1000px',
+      ].join(';');
+      document.body.appendChild(reorderGhostEl);
+    }
+
+    if (reorderActive) {
+
+      if (reorderGhostEl) {
+        reorderGhostEl.style.left = `${e.clientX + 16}px`;
+        reorderGhostEl.style.top  = `${e.clientY - 32}px`;
+      }
+
+      if (trackScrollEl && isReorderAllowed) {
+        reorderDropIndex = getDropIndexFromY(e.clientY);
+      }
+    }
+  }
+
+  function handleReorderPointerUp() {
+
+    if (reorderActive && isReorderAllowed && reorderDropIndex !== null) {
+
+      const visualIds = sortedTracks.map(t => t.trackId);
+      const newOrder = computeReorderedIds(visualIds, _reorderIds, reorderDropIndex);
+
+      reorderTracksInPlaylist(selectedPlaylistId, newOrder);
+    }
+
+    cleanupReorderState();
+  }
+
   function handleDragStart(e, track) {
-    // Always prevent HTML5 drag — we use native startDrag instead
+
+    // Internal reorder gesture takes priority — suppress native file drag
     e.preventDefault();
+    if (_reorderPending || reorderActive) return;
 
     // Re-entrancy guard: browser re-fires dragstart on every mousemove when
     // the previous dragstart was preventDefault-ed; only start once per gesture
@@ -435,7 +575,7 @@
 </script>
 
 {#if breadcrumbs && library}
-  <div class="playlist-view" style="--num-col-width: {numColWidth}">
+  <div class="playlist-view" style="--num-col-width: {numColWidth}" class:drag-sorted={reorderActive && !isReorderAllowed}>
 
     <div class="playlist-header">
 
@@ -451,7 +591,7 @@
 
     </div>
 
-    <div class="track-scroll">
+    <div class="track-scroll" bind:this={trackScrollEl}>
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -493,18 +633,23 @@
       </div>
 
       {#each sortedTracks as track, i (track.trackId)}
+        {#if reorderActive && isReorderAllowed && reorderDropIndex === i}
+          <div class="drop-line"></div>
+        {/if}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="track-row data-row"
           class:selected={selectedTrackIds.has(track.trackId)}
           class:playing={track.trackId === playingTrackId}
+          class:reordering={reorderActive && isReorderAllowed && _reorderIds.includes(track.trackId)}
           draggable="true"
           onclick={(e) => handleRowClick(e, track.trackId)}
           ondblclick={() => handleRowDblClick(track.trackId)}
           oncontextmenu={(e) => handleTrackContextMenu(e, track)}
           ondragstart={(e) => handleDragStart(e, track)}
           ondragend={handleDragEnd}
+          onpointerdown={(e) => handleRowPointerDown(e, track)}
         >
           <div class="col col-num">{i + 1}</div>
           <div class="col col-tag">
@@ -526,6 +671,9 @@
           >{track.comments ?? ''}</div>
         </div>
       {/each}
+      {#if reorderActive && isReorderAllowed && reorderDropIndex === sortedTracks.length}
+        <div class="drop-line"></div>
+      {/if}
 
     </div>
 
@@ -763,6 +911,25 @@
   .col-comments {
     width: 25rem;
     color: var(--fg1);
+  }
+
+  .playlist-view.drag-sorted {
+    outline: 2px solid var(--meadow-green);
+    outline-offset: -2px;
+    border-radius: var(--brad2);
+  }
+
+  .drop-line {
+    height: 2px;
+    min-width: max-content;
+    background-color: var(--meadow-green);
+    border-radius: 2px;
+    pointer-events: none;
+    margin: 1px 0;
+  }
+
+  .data-row.reordering {
+    background-color: var(--overlay5);
   }
 
   .comment-tooltip {
