@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain, nativeImage, protocol, net, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage, protocol, shell } from 'electron';
 import { fileURLToPath } from 'url';
-import { dirname, join, resolve } from 'path';
-import { writeFileSync, mkdirSync } from 'fs';
+import { dirname, join, resolve, extname } from 'path';
+import { writeFileSync, mkdirSync, statSync, createReadStream } from 'fs';
+import { Readable } from 'stream';
 import plist from 'plist';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -182,11 +183,72 @@ app.setName('Social DJ');
 app.whenReady().then(() => {
 
   // Proxy media:// -> file:// so the renderer can stream local audio files.
-  // Headers are forwarded so Range requests from the audio element work correctly,
-  // enabling seeking and proper duration detection.
+  // Handles Range requests manually (net.fetch ignores Range for file:// URLs),
+  // which is required for seeking in large/VBR files that aren't fully buffered.
   protocol.handle('media', (request) => {
-    const fileUrl = request.url.replace(/^media:\/\//, 'file://');
-    return net.fetch(fileUrl, { headers: request.headers });
+
+    let filePath;
+    try {
+      filePath = fileURLToPath(request.url.replace(/^media:\/\//, 'file://'));
+    } catch {
+      return new Response(null, { status: 400 });
+    }
+
+    let stat;
+    try {
+      stat = statSync(filePath);
+    } catch {
+      return new Response(null, { status: 404 });
+    }
+
+    const fileSize = stat.size;
+
+    const mimeMap = {
+      '.mp3': 'audio/mpeg',
+      '.m4a': 'audio/mp4',
+      '.aac': 'audio/aac',
+      '.flac': 'audio/flac',
+      '.wav': 'audio/wav',
+      '.ogg': 'audio/ogg',
+      '.opus': 'audio/ogg',
+      '.aiff': 'audio/aiff',
+      '.aif': 'audio/aiff',
+    };
+    const contentType = mimeMap[extname(filePath).toLowerCase()] ?? 'audio/mpeg';
+
+    const rangeHeader = request.headers.get('Range');
+
+    if (rangeHeader) {
+      const match = /bytes=(\d+)-(\d*)/.exec(rangeHeader);
+      if (match) {
+        const start = parseInt(match[1], 10);
+        const end = match[2] ? parseInt(match[2], 10) : fileSize - 1;
+        const chunkSize = end - start + 1;
+
+        const webStream = Readable.toWeb(createReadStream(filePath, { start, end }));
+
+        return new Response(webStream, {
+          status: 206,
+          headers: {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': String(chunkSize),
+            'Content-Type': contentType,
+          },
+        });
+      }
+    }
+
+    const webStream = Readable.toWeb(createReadStream(filePath));
+
+    return new Response(webStream, {
+      status: 200,
+      headers: {
+        'Content-Length': String(fileSize),
+        'Accept-Ranges': 'bytes',
+        'Content-Type': contentType,
+      },
+    });
   });
 
   createWindow();
