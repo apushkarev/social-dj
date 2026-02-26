@@ -26,6 +26,11 @@
 
   let artist = $derived(playingTrack?.artist ?? '');
   let title = $derived(playingTrack?.name ?? '');
+
+  // Library-provided duration (ms → s). Used as immediate source on loadstart
+  // since audioEl.duration may be unavailable until the file is buffered.
+  let trackLibraryDuration = $derived((playingTrack?.totalTime ?? 0) / 1000);
+
   let timeRemaining = $derived(Math.max(0, duration - currentTime));
 
   // Keep playbar in sync with audio time, except while user is dragging
@@ -46,7 +51,8 @@
 
   function handleLoadStart() {
 
-    duration = 0;
+    // Use library metadata immediately — audioEl.duration is not yet available.
+    duration = trackLibraryDuration;
     currentTime = 0;
     playbarProgress = 0;
   }
@@ -63,17 +69,17 @@
     const d = audioEl.duration;
     const t = audioEl.currentTime;
 
-    if (isFinite(d)) duration = d;
+    // Prefer audioEl.duration when valid; library metadata is already set from loadstart.
+    if (isFinite(d) && d > 0) duration = d;
     if (isFinite(t)) currentTime = t;
   }
 
-  // Fallback for formats that report NaN duration in loadedmetadata
-  // and only resolve it later via durationchange (e.g. VBR MP3).
+  // Catches formats that resolve duration after loadedmetadata (e.g. VBR MP3).
   function handleDurationChange() {
 
     const d = audioEl.duration;
 
-    if (isFinite(d)) duration = d;
+    if (isFinite(d) && d > 0) duration = d;
   }
 
   function loadTrack(trackId, autoplay = true) {
@@ -153,6 +159,7 @@
     updatePlaybarVisual(e.clientX);
 
     const handleMouseMove = (e) => updatePlaybarVisual(e.clientX);
+
     const handleMouseUp = () => {
 
       if (audioEl && duration > 0) {
@@ -266,15 +273,18 @@
     onmousedown={handlePlaybarMouseDown}
   >
 
-    <div class="track-label">{artist} - {title}</div>
+    <div class="track-title-artist">
+      <div class="track-label"><span>{title}</span></div>
+      <div class="track-label artist"><span>{artist}</span></div>
+    </div>
 
-    <span class="time-remaining-min">{duration > 0 ? `-${formatTime(timeRemaining)}` : '—'}</span>
+    <span class="time-remaining-min">-{formatTime(timeRemaining)}</span>
 
     
     <div class="playbar-wrapper">
       <div class="time-row">
         <span>{formatTime(duration > 0 ? currentTime : null)}</span>
-        <span>{duration > 0 ? `-${formatTime(timeRemaining)}` : '—'}</span>
+        <span>-{formatTime(timeRemaining)}</span>
       </div>
 
       <div class="playbar">
@@ -315,27 +325,36 @@
   }
 
   .track-label {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 100%;
-    text-align: left;
-    font-size: 1em;
-    color: var(--fg2);
-    font-weight: 500;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
     pointer-events: none;
 
     display: flex;
     align-items: center;
 
-    transition: filter var(--td-250)
+    transition: filter var(--td-250);
+  }
+
+  .track-label span {
+    font-size: 0.875em;
+    color: var(--fg2);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .track-label.artist span {
+    font-size: 0.75em;
+    color: var(--fg1);
+    font-weight: 600;
   }
 
   .playbar-column.is-hovered .track-label {
     filter: blur(2px);
+  }
+
+  .playbar-column.is-hovered .track-label span {
     color: var(--fg0-5);
   }
 
@@ -435,6 +454,19 @@
 
   .playbar-column.is-hovered .knob {
     opacity: 1;
+  }
+
+  .track-title-artist {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 100%;
+    pointer-events: none;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.1em;
   }
 
 </style>

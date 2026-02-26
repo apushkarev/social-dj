@@ -28,7 +28,7 @@ export function toAudioVolume(linear) {
 // Formats seconds -> 'm:ss'. Returns '—' for null/undefined/NaN/Infinity.
 export function formatTime(seconds) {
 
-  if (seconds == null || !isFinite(seconds)) return '—';
+  if (seconds == null || !isFinite(seconds)) return '0:00';
 
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);

@@ -175,9 +175,12 @@ ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
 app.setName('Social DJ');
 app.whenReady().then(() => {
 
-  // Proxy media:// -> file:// so the renderer can stream local audio files
+  // Proxy media:// -> file:// so the renderer can stream local audio files.
+  // Headers are forwarded so Range requests from the audio element work correctly,
+  // enabling seeking and proper duration detection.
   protocol.handle('media', (request) => {
-    return net.fetch(request.url.replace(/^media:\/\//, 'file://'));
+    const fileUrl = request.url.replace(/^media:\/\//, 'file://');
+    return net.fetch(fileUrl, { headers: request.headers });
   });
 
   createWindow();
