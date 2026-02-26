@@ -5,7 +5,7 @@
   import PlaylistView from './lib/components/PlaylistView.svelte';
   import { globals } from './lib/globals.svelte.js';
   import ContextMenu from './lib/components/ContextMenu.svelte';
-  import Player from './lib/components/Player.svelte';
+  import HeaderPlayer from './lib/components/HeaderPlayer.svelte';
   import MainVolume from './lib/components/MainVolume.svelte';
   import { saveAppState } from './lib/app-state.svelte.js';
 
@@ -84,7 +84,7 @@
 <div class="header">
   <div class="header-left"></div>
   <div class="header-center">
-    <Player />
+    <HeaderPlayer />
   </div>
   <div class="header-right">
     <MainVolume />

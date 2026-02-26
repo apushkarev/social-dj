@@ -11,6 +11,9 @@ let globalStorage = $state({
     header: null // apple music default mode, single output or pre-audition
   },
 
+  currentlyPlayingTrackId: null,
+  currentViewTracks: [],
+
   // Persisted — populated from app-state.json on init, saved on every change
   'volume': {
     "header": 0.5

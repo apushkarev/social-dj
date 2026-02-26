@@ -11,6 +11,7 @@ const PERSISTED_KEYS = [
   'selectedPlaylistId',
   'selectedFolderView',
   'fontSize',
+  'volume',
 ];
 
 // Loads persisted state from app-state.json into globals.

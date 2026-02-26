@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage, protocol, net } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
@@ -6,6 +6,11 @@ import plist from 'plist';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isDev = !app.isPackaged;
+
+// Must be called before app is ready
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'media', privileges: { secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } }
+]);
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -168,7 +173,15 @@ ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
 });
 
 app.setName('Social DJ');
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+
+  // Proxy media:// -> file:// so the renderer can stream local audio files
+  protocol.handle('media', (request) => {
+    return net.fetch(request.url.replace(/^media:\/\//, 'file://'));
+  });
+
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

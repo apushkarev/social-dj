@@ -1,64 +1,151 @@
 <script>
 
+  import { onMount } from 'svelte';
   import { icons } from '../icons';
   import IconButton from './IconButton.svelte';
+  import { globals } from '../globals.svelte.js';
+  import { formatTime, toMediaUrl, toAudioVolume } from '../helpers.svelte.js';
 
   const PLAYBAR_WIDTH = 400;
-  const DURATION = 237; // placeholder: 3:57
 
   let isPlaying = $state(false);
-  let playbarProgress = $state(0.33);
+  let currentTime = $state(0);
+  let duration = $state(0);
+  let playbarProgress = $state(0);
   let playbarColumnHovered = $state(false);
   let playbarDragging = $state(false);
 
+  let audioEl = $state();
   let playbarEl = $state();
 
-  let artist = $state('Melanie Martinez');
-  let title = $state('Pacify Her');
+  let library = $derived(globals.get('library'));
+  let playingTrackId = $derived(globals.get('currentlyPlayingTrackId'));
+  let playingTrack = $derived(library?.tracks?.[String(playingTrackId)] ?? null);
 
-  let currentTime = $derived(Math.round(playbarProgress * DURATION));
-  let timeRemaining = $derived(DURATION - currentTime);
+  let artist = $derived(playingTrack?.artist ?? '');
+  let title = $derived(playingTrack?.name ?? '');
+  let timeRemaining = $derived(Math.max(0, duration - currentTime));
 
-  function formatTime(seconds) {
+  // Keep playbar in sync with audio time, except while user is dragging
+  $effect(() => {
 
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
+    if (!playbarDragging && duration > 0) {
+      playbarProgress = currentTime / duration;
+    }
+  });
 
-    return `${m}:${String(s).padStart(2, '0')}`;
+  onMount(() => {
+
+    globals.update('audio', a => ({ ...a, header: audioEl }));
+    audioEl.volume = toAudioVolume(globals.get('volume')?.header ?? 0.5);
+
+    return () => globals.update('audio', a => ({ ...a, header: null }));
+  });
+
+  function handleTimeUpdate() {
+
+    const t = audioEl.currentTime;
+
+    if (!playbarDragging && isFinite(t)) currentTime = t;
   }
 
-  function togglePlayPause() {
-    
-    if (isPlaying) {
-      pause();
+  function handleLoadedMetadata() {
+
+    const d = audioEl.duration;
+    const t = audioEl.currentTime;
+
+    if (isFinite(d)) duration = d;
+    if (isFinite(t)) currentTime = t;
+  }
+
+  function loadTrack(trackId, autoplay = true) {
+
+    const track = library?.tracks?.[String(trackId)];
+    if (!track?.location) return;
+
+    duration = 0;
+    currentTime = 0;
+    playbarProgress = 0;
+
+    globals.set('currentlyPlayingTrackId', trackId);
+    audioEl.src = toMediaUrl(track.location);
+
+    if (autoplay) {
+      audioEl.play().catch(() => {});
     } else {
-      play();
+      audioEl.load();
     }
   }
 
-  export function pause() {
-    isPlaying = false;
-  }
+  function togglePlayPause() {
 
-  export function play() {
-    isPlaying = true;
-  }
+    if (!audioEl.src) return;
 
-  function handlePrev() {
-    console.log('Previous track');
+    if (isPlaying) {
+      audioEl.pause();
+    } else {
+      audioEl.play().catch(() => {});
+    }
   }
 
   function handleNext() {
-    console.log('Next track');
+
+    const tracks = globals.get('currentViewTracks') ?? [];
+    if (!tracks.length) return;
+
+    const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
+    if (currentIdx === -1) return;
+
+    const nextIdx = (currentIdx + 1) % tracks.length;
+
+    loadTrack(tracks[nextIdx].trackId, isPlaying);
+  }
+
+  function handlePrev() {
+
+    // Playing and past 3 seconds: seek to beginning
+    if (isPlaying && audioEl.currentTime > 3) {
+      audioEl.currentTime = 0;
+      return;
+    }
+
+    const tracks = globals.get('currentViewTracks') ?? [];
+    if (!tracks.length) return;
+
+    const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
+    if (currentIdx === -1) return;
+
+    const prevIdx = currentIdx === 0 ? tracks.length - 1 : currentIdx - 1;
+
+    loadTrack(tracks[prevIdx].trackId, isPlaying);
+  }
+
+  function handleEnded() {
+
+    const tracks = globals.get('currentViewTracks') ?? [];
+    if (!tracks.length) return;
+
+    const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
+    if (currentIdx === -1) return;
+
+    const nextIdx = (currentIdx + 1) % tracks.length;
+
+    loadTrack(tracks[nextIdx].trackId, true);
   }
 
   function handlePlaybarMouseDown(e) {
 
     playbarDragging = true;
-    updatePlaybarProgress(e.clientX);
+    updatePlaybarVisual(e.clientX);
 
-    const handleMouseMove = (e) => updatePlaybarProgress(e.clientX);
+    const handleMouseMove = (e) => updatePlaybarVisual(e.clientX);
     const handleMouseUp = () => {
+
+      if (audioEl && duration > 0) {
+        const seekTime = playbarProgress * duration;
+        audioEl.currentTime = seekTime;
+        currentTime = seekTime;
+      }
 
       playbarDragging = false;
       document.removeEventListener('mousemove', handleMouseMove);
@@ -69,7 +156,7 @@
     document.addEventListener('mouseup', handleMouseUp);
   }
 
-  function updatePlaybarProgress(clientX) {
+  function updatePlaybarVisual(clientX) {
 
     const rect = playbarEl.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -77,6 +164,15 @@
   }
 
 </script>
+
+<audio
+  bind:this={audioEl}
+  onplay={() => isPlaying = true}
+  onpause={() => isPlaying = false}
+  onended={handleEnded}
+  ontimeupdate={handleTimeUpdate}
+  onloadedmetadata={handleLoadedMetadata}
+></audio>
 
 <div class="player">
 
@@ -103,13 +199,13 @@
 
     <div class="track-label">{artist} - {title}</div>
 
-    <span class="time-remaining-min">-{formatTime(timeRemaining)}</span>
+    <span class="time-remaining-min">{duration > 0 ? `-${formatTime(timeRemaining)}` : '—'}</span>
 
     
     <div class="playbar-wrapper">
       <div class="time-row">
-        <span>{formatTime(currentTime)}</span>
-        <span>-{formatTime(timeRemaining)}</span>
+        <span>{formatTime(duration > 0 ? currentTime : null)}</span>
+        <span>{duration > 0 ? `-${formatTime(timeRemaining)}` : '—'}</span>
       </div>
 
       <div class="playbar">
@@ -259,8 +355,8 @@
   .knob {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     background: var(--fg3-s);
     border-radius: 50%;
     pointer-events: none;

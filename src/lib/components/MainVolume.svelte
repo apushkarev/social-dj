@@ -2,14 +2,27 @@
 
   import { icons } from '../icons';
   import IconButton from './IconButton.svelte';
+  import { globals } from '../globals.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
+  import { toAudioVolume } from '../helpers.svelte.js';
 
   const VOLUME_SLIDER_WIDTH = 100;
 
-  let volume = $state(0.75);
+  const MIN_DB = -60;
+
+  let volumeVal = $derived(globals.get('volume')?.header ?? 0.5);
+  let dbDisplay = $derived(volumeVal <= 0 ? '-\u221e dB' : Math.round(MIN_DB * (1 - volumeVal)) + ' dB');
   let volumeSliderHovered = $state(false);
   let volumeSliderDragging = $state(false);
 
   let volumeSliderEl = $state();
+
+  // Reactively apply volume to audio element whenever it changes
+  $effect(() => {
+
+    const audio = globals.get('audio')?.header;
+    if (audio) audio.volume = toAudioVolume(volumeVal);
+  });
 
   function handleVolumeSliderMouseDown(e) {
 
@@ -32,7 +45,9 @@
 
     const rect = volumeSliderEl.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    volume = x / rect.width;
+
+    globals.update('volume', v => ({ ...v, header: x / rect.width }));
+    saveAppState();
   }
 
 </script>
@@ -51,14 +66,16 @@
     onmousedown={handleVolumeSliderMouseDown}
   >
     <div class="volume-slider-bg">
-      <div class="volume-slider-fill" style="width: {volume * 100}%"></div>
+      <div class="volume-slider-fill" style="width: {volumeVal * 100}%"></div>
       <div
         class="knob"
         class:hovered={volumeSliderHovered || volumeSliderDragging}
-        style="left: {volume * 100}%"
+        style="left: {volumeVal * 100}%"
       ></div>
     </div>
   </div>
+
+  <span class="db-label">{dbDisplay}</span>
 
 </div>
 
@@ -68,6 +85,16 @@
     align-items: center;
     gap: 8px;
     -webkit-app-region: no-drag;
+  }
+
+  .db-label {
+    width: 3.5em;
+    font-size: 0.875em;
+    color: var(--fg2);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    flex-shrink: 0;
   }
 
   .volume-slider {
@@ -108,8 +135,8 @@
   }
 
   .knob.hovered {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     background: var(--fg3-s);
   }
 </style>

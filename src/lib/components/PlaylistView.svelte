@@ -4,6 +4,7 @@
   import { dragStore } from '../drag-state.svelte.js';
   import { removeTracksFromPlaylist } from '../tree-management.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
+  import { toMediaUrl } from '../helpers.svelte.js';
   import ColorTag from './ColorTag.svelte';
 
   let library            = $derived(globals.get('library'));
@@ -13,11 +14,21 @@
   let selectedTrackIds = $state(new Set());
   let anchorTrackId = $state(null);
 
+  let playingTrackId = $derived(globals.get('currentlyPlayingTrackId'));
+
+  let clickTimer = null;
+
   $effect(() => {
     selectedPlaylistId;
     selectedFolderView;
+    if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
     selectedTrackIds = new Set();
     anchorTrackId = null;
+  });
+
+  // Keep queue in sync with current view
+  $effect(() => {
+    globals.set('currentViewTracks', tracks);
   });
 
   const CYCLE = [
@@ -64,7 +75,40 @@
     }
   }
 
+  function handleRowDblClick(trackId) {
+
+    const track = library?.tracks[String(trackId)];
+    const audio = globals.get('audio')?.header;
+
+    if (!track?.location || !audio) return;
+
+    globals.set('currentlyPlayingTrackId', trackId);
+    audio.src = toMediaUrl(track.location);
+    audio.play().catch(() => {});
+  }
+
   function handleRowClick(e, trackId) {
+
+    // Modifier-key clicks are immediate (multi-select, no dblclick conflict)
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      doSelectionLogic(e, trackId);
+      return;
+    }
+
+    // Debounce plain clicks to let dblclick fire first
+    if (clickTimer) {
+      clearTimeout(clickTimer);
+      clickTimer = null;
+      return;
+    }
+
+    clickTimer = setTimeout(() => {
+      clickTimer = null;
+      doSelectionLogic(e, trackId);
+    }, 200);
+  }
+
+  function doSelectionLogic(e, trackId) {
 
     if (e.shiftKey && anchorTrackId) {
 
@@ -404,8 +448,10 @@
         <div
           class="track-row data-row"
           class:selected={selectedTrackIds.has(track.trackId)}
+          class:playing={track.trackId === playingTrackId}
           draggable="true"
           onclick={(e) => handleRowClick(e, track.trackId)}
+          ondblclick={() => handleRowDblClick(track.trackId)}
           oncontextmenu={(e) => handleTrackContextMenu(e, track)}
           ondragstart={(e) => handleDragStart(e, track)}
           ondragend={handleDragEnd}
@@ -416,6 +462,7 @@
               color={colorTags.get(String(track.trackId))}
               onclick={() => handleTagLeftClick(track.trackId)}
               onrightclick={() => handleTagRightClick(track.trackId)}
+              playing={track.trackId === playingTrackId}
             />
           </div>
           <div class="col col-bpm">{track.bpm ?? '—'}</div>
@@ -535,6 +582,21 @@
 
   .data-row.selected {
     background-color: var(--overlay5);
+  }
+
+  .data-row.playing {
+    background-color: var(--yellow-warm-80);
+    color: var(--black4);
+  }
+
+  .data-row.playing .col-num,
+  .data-row.playing .col-bpm,
+  .data-row.playing .col-time,
+  .data-row.playing .col-comments,
+  .data-row.playing .col-title,
+  .data-row.playing .col-artist {
+    color: var(--black4);
+    font-weight: 500;
   }
 
   .col {
