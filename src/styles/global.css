@@ -64,3 +64,30 @@ body {
   height: 1em;
   min-height: 1em;
 }
+
+.jcfs {
+  justify-content: flex-start;
+}
+
+.jcfe {
+  justify-content: flex-end;
+}
+
+.jcc {
+  justify-content: center;
+}
+
+.hGap1 {
+  flex-shrink: 0;
+  width: 0.5em;
+}
+
+.hGap2 {
+  flex-shrink: 0;
+  width: 1em;
+}
+
+.hGap3 {
+  flex-shrink: 0;
+  width: 1.5em;
+}

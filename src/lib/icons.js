@@ -137,5 +137,10 @@ export const icons = {
       <path d="M4.22572 6.61288H2.43536C1.78526 6.61288 1.24179 7.15635 1.24179 7.80645V10.1936C1.24179 10.8437 1.78526 11.3872 2.43536 11.3872H4.22572L8.89258 14.7411C9.66279 15.274 10.7695 14.7129 10.7904 13.7743V4.22571C10.8127 3.28656 9.77236 2.72452 9 3.25892L4.22572 6.61288Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       <line x1="4.5" y1="6" x2="4.5" y2="12" stroke="currentColor" stroke-width="2" />
     </svg>
-  `
+  `,
+  arrowDown: `
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11 16L19.7836 24.7836C19.8477 24.8519 19.9251 24.9064 20.0111 24.9436C20.0971 24.9808 20.1898 25 20.2835 25C20.3772 25 20.4699 24.9808 20.5558 24.9436C20.6418 24.9064 20.7192 24.8519 20.7834 24.7836L29.567 16" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>  
+  `,
 };

@@ -2,9 +2,11 @@
   import { globals } from '../globals.svelte.js';
   import { colorTags } from '../color-tags.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
-  import { removeTracksFromPlaylist } from '../tree-management.svelte.js';
+  import { removeTracksFromPlaylist, setNodeSort } from '../tree-management.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
   import { toMediaUrl } from '../helpers.svelte.js';
+  import { getSortedTracks, nextSortDirection, TAG_CYCLE } from '../sort.js';
+  import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
 
   let library            = $derived(globals.get('library'));
@@ -26,26 +28,16 @@
     anchorTrackId = null;
   });
 
-  // Keep queue in sync with current view
+  // Keep queue in sync with current view — uses sorted order for prev/next navigation
   $effect(() => {
-    globals.set('currentViewTracks', tracks);
+    globals.set('currentViewTracks', sortedTracks);
   });
-
-  const CYCLE = [
-    null,
-    'var(--red)',
-    'var(--bristol-orange)',
-    'var(--yellow-warm)',
-    'var(--meadow-green)',
-    'var(--mint)',
-    'var(--cornflower-blue)',
-  ];
 
   function nextColor(trackId) {
 
-    const idx = CYCLE.indexOf(colorTags.get(String(trackId)));
+    const idx = TAG_CYCLE.indexOf(colorTags.get(String(trackId)));
 
-    return CYCLE[(idx + 1) % CYCLE.length];
+    return TAG_CYCLE[(idx + 1) % TAG_CYCLE.length];
   }
 
   function handleTagLeftClick(trackId) {
@@ -114,8 +106,8 @@
 
       e.preventDefault();
 
-      const anchorIdx = tracks.findIndex(t => t.trackId === anchorTrackId);
-      const clickIdx  = tracks.findIndex(t => t.trackId === trackId);
+      const anchorIdx = sortedTracks.findIndex(t => t.trackId === anchorTrackId);
+      const clickIdx  = sortedTracks.findIndex(t => t.trackId === trackId);
 
       if (anchorIdx !== -1 && clickIdx !== -1) {
 
@@ -156,10 +148,10 @@
 
       e.preventDefault();
 
-      if (selectedTrackIds.size === tracks.length) {
+      if (selectedTrackIds.size === sortedTracks.length) {
         selectedTrackIds = new Set();
       } else {
-        selectedTrackIds = new Set(tracks.map(t => t.trackId));
+        selectedTrackIds = new Set(sortedTracks.map(t => t.trackId));
       }
     }
 
@@ -249,6 +241,12 @@
   }
 
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
+
+  let activeNodeId = $derived(selectedFolderView?.id ?? selectedPlaylistId);
+  let sortColumn = $derived(getNodeById(library, activeNodeId)?.sortColumn ?? null);
+  let sortDirection = $derived(getNodeById(library, activeNodeId)?.sortDirection ?? 0);
+
+  let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
 
   // Effective view: folder aggregation takes priority over single playlist
   let breadcrumbs = $derived(calcBreadcrumbs());
@@ -378,6 +376,15 @@
     cleanupDrag();
   }
 
+  function handleHeaderClick(col) {
+
+    let newDir = sortColumn === col ? nextSortDirection(sortDirection) : 1;
+
+    if (col == 'num') newDir = 1;
+
+    setNodeSort(activeNodeId, col, newDir);
+  }
+
   function handleTrackContextMenu(e, track) {
     if (!selectedPlaylistId) return;
     e.preventDefault();
@@ -432,17 +439,46 @@
 
     <div class="track-scroll">
 
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
       <div class="track-row header-row">
-        <div class="col col-num">#</div>
-        <div class="col col-tag">Tag</div>
-        <div class="col col-bpm">BPM</div>
-        <div class="col col-title">Title</div>
-        <div class="col col-time">Time</div>
-        <div class="col col-artist">Artist</div>
-        <div class="col col-comments">Comments</div>
+        <div class="col col-num jcfe sortable" onclick={() => handleHeaderClick('num')}>
+          <span style="font-size: 1.25em;">#</span>
+          {#if sortColumn === 'num'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap2"></div>
+        <div class="col col-tag jcc sortable" onclick={() => handleHeaderClick('tag')}>
+          <span>Tag</span>
+          {#if sortColumn === 'tag'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap2"></div>
+        <div class="col col-bpm jcfe sortable" onclick={() => handleHeaderClick('bpm')}>
+          <span>BPM</span>
+          {#if sortColumn === 'bpm'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap1"></div>
+        <div class="col col-title jcfs sortable" onclick={() => handleHeaderClick('title')}>
+          <span>Title</span>
+          {#if sortColumn === 'title'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap2"></div>
+        <div class="col col-time jcfe sortable" onclick={() => handleHeaderClick('time')}>
+          <span>Time</span>
+          {#if sortColumn === 'time'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap1"></div>
+        <div class="col col-artist jcfs sortable" onclick={() => handleHeaderClick('artist')}>
+          <span>Artist</span>
+          {#if sortColumn === 'artist'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        <div class="hGap3"></div>
+        <div class="col col-comments jcfs sortable" onclick={() => handleHeaderClick('comments')}>
+          <span>Comments</span>
+          {#if sortColumn === 'comments'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
       </div>
 
-      {#each tracks as track, i (track.trackId)}
+      {#each sortedTracks as track, i (track.trackId)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
@@ -551,15 +587,63 @@
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--fg1);
-
-    padding: 1.5em 0;
+    color: var(--fg1);  
+    gap: 0;
+    padding: 0.5em 0;
+    height: 4em;
     box-sizing: border-box;
-
-    gap: 1.333em;
 
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border2);
+  }
+
+  .header-row .col {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+    padding-left: 0.75em;
+    padding-right: 0.25em;
+    box-sizing: border-box;
+    height: 28px;
+  }
+
+  .header-row .sortable {
+    cursor: pointer;
+    user-select: none;
+    border-radius: var(--brad1);
+    transition: background-color var(--td-100);
+  }
+
+  .header-row .sortable:hover {
+    background-color: var(--overlay3);
+  }
+
+  .header-row .sortable:active {
+    background-color: var(--overlay4);
+  }
+
+  .sort-arrow {
+    
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(180deg);
+    transition: transform var(--td-150);
+
+    width: 20px;
+    height: 20px;
+  }
+
+  .sort-arrow.desc {
+    transform: rotate(0deg);
+  }
+
+  .sort-arrow :global(svg) {
+    width: 20px;
+    height: 20px;
   }
 
   .data-row {
@@ -619,24 +703,28 @@
   
 
   .col-tag {
-    width: 2rem;
+    width: 4rem;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .col-bpm {
-    width: 2rem;
+    width: 3.5rem;
     text-align: right;
     color: var(--fg1);
   }
 
-  .col-title {
-    width: 16rem;
+  .header-row .col-bpm {
+    width: 4rem;
   }
 
-  .header-row .col-title {
-    width: 15.1rem;
+  .data-row .col-bpm {
+    padding-right: 0.125em;
+  }
+
+  .col-title {
+    width: 16rem;
   }
 
   .col-time {

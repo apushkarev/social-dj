@@ -176,6 +176,30 @@ export function moveTreeNode(nodeId, targetFolderId) {
   saveHierarchy();
 }
 
+// Sets sortColumn and sortDirection on a node. Persists hierarchy.json.
+export function setNodeSort(nodeId, sortColumn, sortDirection) {
+
+  const library = globals.get('library');
+  const path = library.index[nodeId];
+  if (!path) return;
+
+  globals.update('library', current => {
+
+    let node = { children: current.hierarchy };
+
+    for (const i of path) {
+      node = node.children[i];
+    }
+
+    node.sortColumn = sortColumn;
+    node.sortDirection = sortDirection;
+
+    return current;
+  });
+
+  saveHierarchy();
+}
+
 // Adds a new item under parentFolderId, updates globals, persists.
 // Returns { newId, newHierarchy, newIndex } or null if parent not found.
 export function createTreeItem(parentFolderId, type, name) {
