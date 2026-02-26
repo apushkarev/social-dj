@@ -27,8 +27,21 @@
     return `${m}:${String(s).padStart(2, '0')}`;
   }
 
-  function handlePlayPause() {
-    isPlaying = !isPlaying;
+  function togglePlayPause() {
+    
+    if (isPlaying) {
+      pause();
+    } else {
+      play();
+    }
+  }
+
+  export function pause() {
+    isPlaying = false;
+  }
+
+  export function play() {
+    isPlaying = true;
   }
 
   function handlePrev() {
@@ -71,7 +84,7 @@
     <IconButton icon={icons.prev} onclick={handlePrev} />
     <IconButton 
       icon={isPlaying ? icons.pause : icons.play} 
-      onclick={handlePlayPause}
+      onclick={togglePlayPause}
       active={isPlaying}
     />
     <IconButton icon={icons.next} onclick={handleNext} />
@@ -117,7 +130,7 @@
     display: flex;
     align-items: center;
     gap: 1em;
-    height: var(--titlebar-height);
+    height: var(--header-height);
     -webkit-app-region: no-drag;
   }
 

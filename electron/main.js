@@ -19,7 +19,7 @@ function createWindow() {
       nodeIntegration: false,
     },
     backgroundColor: '#00141a',
-    titleBarStyle: 'hiddenInset',
+    headerStyle: 'hiddenInset',
     trafficLightPosition: { x: 12, y: 12 },
     show: false,
   });

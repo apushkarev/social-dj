@@ -114,6 +114,12 @@
     </section>
 
     <section class="section">
+      <h2 class="subheading">Sound setup</h2>
+
+      
+    </section>
+
+    <section class="section">
       <h2 class="subheading">Library management</h2>
 
       <div class="import-block">

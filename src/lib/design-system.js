@@ -110,7 +110,7 @@ export const ds = {
   '--bxs': '0 4px 32px rgba(0, 0, 0, 0.2)',
   '--txs': '0 1px 2px rgba(0, 0, 0, 1)',
 
-  '--titlebar-height': '56px'
+  '--header-height': '56px'
 };
 
 export const initializeDesignSystem = () => {

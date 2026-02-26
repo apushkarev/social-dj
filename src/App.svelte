@@ -81,12 +81,12 @@
 </script>
 
 <ContextMenu />
-<div class="titlebar">
-  <div class="titlebar-left"></div>
-  <div class="titlebar-center">
+<div class="header">
+  <div class="header-left"></div>
+  <div class="header-center">
     <Player />
   </div>
-  <div class="titlebar-right">
+  <div class="header-right">
     <MainVolume />
   </div>
 </div>
@@ -113,12 +113,12 @@
 </div>
 
 <style>
-  .titlebar {
+  .header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: var(--titlebar-height);
+    height: var(--header-height);
     -webkit-app-region: drag;
     z-index: 100;
 
@@ -130,13 +130,13 @@
     justify-content: space-between;
   }
 
-  .titlebar-left {
+  .header-left {
     width: 80px;
     flex-shrink: 0;
     height: 100%;
   }
 
-  .titlebar-center {
+  .header-center {
     width: 100%;
     display: flex;
     align-items: center;
@@ -146,7 +146,7 @@
     box-sizing: border-box;
   }
 
-  .titlebar-right {
+  .header-right {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -156,8 +156,8 @@
   .app-layout {
     display: flex;
     width: 100%;
-    height: calc(100% - var(--titlebar-height));
-    margin-top: var(--titlebar-height);
+    height: calc(100% - var(--header-height));
+    margin-top: var(--header-height);
   }
 
   .tree-wrapper {
