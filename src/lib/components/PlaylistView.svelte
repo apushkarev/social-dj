@@ -399,7 +399,17 @@
 
     const idsSet = new Set(ids.map(String));
 
+    const showInFinderLabel = window.electronAPI?.platform === 'darwin' ? 'Show in Finder' : 'Show in Explorer';
+
     contextMenu.show(e.clientX, e.clientY, [
+      {
+        icon: 'folder',
+        text: showInFinderLabel,
+        callback: () => {
+          if (track.location) window.electronAPI?.showInFolder(track.location);
+        },
+      },
+      { type: 'separator' },
       {
         icon: 'trash',
         text: 'Delete from playlist',

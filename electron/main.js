@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage, protocol, net } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage, protocol, net, shell } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 import { writeFileSync, mkdirSync } from 'fs';
@@ -137,6 +137,12 @@ ipcMain.on('start-file-drag', (event, fileUrlPaths) => {
   }
 
   event.returnValue = null;
+});
+
+ipcMain.on('show-in-folder', (_event, fileUrl) => {
+  try {
+    shell.showItemInFolder(fileURLToPath(fileUrl));
+  } catch {}
 });
 
 ipcMain.on('write-app-state', (_event, data) => {
