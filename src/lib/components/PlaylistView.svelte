@@ -590,7 +590,7 @@
     color: var(--fg1);  
     gap: 0;
     padding: 0.5em 0;
-    height: 4em;
+    height: 3em;
     box-sizing: border-box;
 
     backdrop-filter: blur(10px);
@@ -602,11 +602,12 @@
     align-items: center;
     gap: 0.3em;
     padding-top: 0.25em;
+    padding-right: 0.25em;
     padding-bottom: 0.25em;
     padding-left: 0.75em;
-    padding-right: 0.25em;
     box-sizing: border-box;
-    height: 28px;
+
+    height: 2.25em;
   }
 
   .header-row .sortable {
