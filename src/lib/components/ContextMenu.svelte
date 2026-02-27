@@ -126,7 +126,7 @@
     gap: 0.625em;
     padding: 0.125em 0.5em 0.125em 0.25em;
     cursor: pointer;
-    color: var(--fg3-s);
+    color: var(--fg2-s);
     font-size: 0.9375em;
     font-weight: 500;
     user-select: none;
@@ -148,6 +148,10 @@
     flex-shrink: 0;
     width: 2em;
     height: 2em;
+  }
+
+  .item-text {
+    font-weight: 500;
   }
 
   .item-icon :global(svg) {
