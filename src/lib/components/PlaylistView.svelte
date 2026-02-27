@@ -8,6 +8,7 @@
   import { getSortedTracks, nextSortDirection, TAG_CYCLE } from '../sort.js';
   import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
+  import { slide } from 'svelte/transition';
 
   let library            = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
@@ -89,6 +90,7 @@
     if (!headerAudio) return;
 
     globals.set('currentlyPlayingTrackId', trackId);
+
     headerAudio.src = toMediaUrl(track.location);
     headerAudio.load();
     headerAudio.play().catch(() => {});
@@ -213,6 +215,7 @@
 
       names.push(node.name);
     }
+
     return names;
   }
 
@@ -243,6 +246,7 @@
 
       return [selectedFolderView.name];
     }
+
     if (playlist?.type === 'playlist') {
 
       names = getBreadcrumbPath(library, selectedPlaylistId);
@@ -451,6 +455,7 @@
     // Prevent re-entry from multiple listeners firing.
     _dragActive = false;
     _fileDragStarted = false;
+
     document.removeEventListener('pointerup', handleDragPointerUp, true);
     window.removeEventListener('pointerup', handleDragPointerUp);
     document.removeEventListener('pointermove', handleDragPointerMove, true);
@@ -506,6 +511,7 @@
         icon: 'trash',
         text: 'Delete from playlist',
         callback: () => {
+
           removeTracksFromPlaylist(selectedPlaylistId, ids);
           selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
           if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
@@ -548,36 +554,49 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <div class="track-row header-row">
+
         <div class="col col-num jcfe sortable" onclick={() => handleHeaderClick('num')}>
           <span style="font-size: 1.25em;">#</span>
           {#if sortColumn === 'num'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap2"></div>
+
         <div class="col col-tag jcc sortable" onclick={() => handleHeaderClick('tag')}>
           <span>Tag</span>
           {#if sortColumn === 'tag'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap2"></div>
+
         <div class="col col-bpm jcfe sortable" onclick={() => handleHeaderClick('bpm')}>
           <span>BPM</span>
           {#if sortColumn === 'bpm'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap1"></div>
+
         <div class="col col-title jcfs sortable" onclick={() => handleHeaderClick('title')}>
           <span>Title</span>
           {#if sortColumn === 'title'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap2"></div>
+
         <div class="col col-time jcfe sortable" onclick={() => handleHeaderClick('time')}>
           <span>Time</span>
           {#if sortColumn === 'time'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap1"></div>
+
         <div class="col col-artist jcfs sortable" onclick={() => handleHeaderClick('artist')}>
           <span>Artist</span>
           {#if sortColumn === 'artist'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
         <div class="hGap3"></div>
+
         <div class="col col-comments jcfs sortable" onclick={() => handleHeaderClick('comments')}>
           <span>Comments</span>
           {#if sortColumn === 'comments'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
@@ -592,13 +611,16 @@
           class:selected={selectedTrackIds.has(track.trackId)}
           class:playing={track.trackId === playingTrackId}
           class:reordering={reorderActive && isReorderAllowed && reorderingTrackIds.has(String(track.trackId))}
+          
           draggable="true"
+          ondragstart={(e) => handleDragStart(e, track)}
+
           onclick={(e) => handleRowClick(e, track.trackId)}
           ondblclick={() => handleRowDblClick(track.trackId)}
           oncontextmenu={(e) => handleTrackContextMenu(e, track)}
-          ondragstart={(e) => handleDragStart(e, track)}
         >
           <div class="col col-num">{i + 1}</div>
+
           <div class="col col-tag">
             <ColorTag
               color={colorTags.get(String(track.trackId))}
@@ -607,10 +629,12 @@
               playing={track.trackId === playingTrackId}
             />
           </div>
+
           <div class="col col-bpm">{track.bpm ?? '—'}</div>
           <div class="col col-title">{track.name ?? '—'}</div>
           <div class="col col-time">{formatTime(track.totalTime)}</div>
           <div class="col col-artist">{track.artist ?? '—'}</div>
+
           <div
             class="col col-comments"
             onmouseenter={e => handleCommentEnter(e, track.comments)}
