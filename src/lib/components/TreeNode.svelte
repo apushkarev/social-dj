@@ -157,6 +157,9 @@
   }
 
   function handleContextMenu(e) {
+
+    const node = e.currentTarget
+
     e.preventDefault();
     contextX = e.clientX;
     contextY = e.clientY;
@@ -173,7 +176,7 @@
         text: 'Delete',
         callback: handleDelete,
       },
-    ]);
+    ], node, 'mouse', 'target');
   }
 
   async function handleDelete() {

@@ -193,6 +193,8 @@
 
   async function handleSoundOutputClick(e) {
 
+    const buttonEl = e.currentTarget;
+
     let devices;
 
     try {
@@ -227,7 +229,7 @@
       };
     });
 
-    contextMenu.show(e.clientX, e.clientY, items);
+    contextMenu.show(e.clientX, e.clientY, items, buttonEl, 'target', 'target');
   }
 
   function toggleMute() {

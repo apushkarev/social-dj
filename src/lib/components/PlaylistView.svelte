@@ -487,6 +487,9 @@
   }
 
   function handleTrackContextMenu(e, track) {
+
+    const row = e.currentTarget;
+
     if (!selectedPlaylistId) return;
     e.preventDefault();
 
@@ -517,7 +520,7 @@
           if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
         },
       },
-    ]);
+    ], row, 'mouse', 'target');
   }
 
   function formatTime(ms) {

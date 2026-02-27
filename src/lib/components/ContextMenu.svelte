@@ -10,10 +10,17 @@
   let positioned = $state(false);
   let hoveredIndex = $state(null);
 
+  const ANCHOR_GAP = 4;
+  const CURSOR_OFFSET_X = 6;
+  const CURSOR_OFFSET_Y = 6;
+
   $effect(() => {
     const visible = contextMenu.visible;
     const x = contextMenu.x;
     const y = contextMenu.y;
+    const anchor = contextMenu.anchor;
+    const aaX = contextMenu.anchorAlignX;
+    const aaY = contextMenu.anchorAlignY;
 
     if (visible) {
       positioned = false;
@@ -27,8 +34,29 @@
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
-        let ax = x;
-        let ay = y;
+        let ax, ay;
+
+        if (anchor) {
+          const rect = anchor.getBoundingClientRect();
+
+          console.log({ aaX, aaY});
+
+          if (aaX == 'target') {
+            ax = rect.right - rect.width;  
+          } else if (aaX == 'mouse') {
+            ax = x + CURSOR_OFFSET_X;  
+          }
+
+          if (aaY == 'target') {
+            ay = rect.bottom + ANCHOR_GAP;
+          } else if (aaY == 'mouse') {
+            ay = y + CURSOR_OFFSET_Y;
+          }
+          
+        } else {
+          ax = x + CURSOR_OFFSET_X;
+          ay = y;
+        }
 
         if (ax + width  > vw - MARGIN) ax = vw - width  - MARGIN;
         if (ax          < MARGIN)      ax = MARGIN;
