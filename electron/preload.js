@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   platform: process.platform,
@@ -9,4 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
   getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
+  addTrack: (filePath, vdjDbPath) => ipcRenderer.invoke('add-track', filePath, vdjDbPath),
+  deleteTracks: (trackIds) => ipcRenderer.invoke('delete-tracks', trackIds),
+  getPathForFile: (file) => webUtils.getPathForFile(file),
 });

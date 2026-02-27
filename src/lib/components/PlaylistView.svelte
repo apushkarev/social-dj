@@ -2,7 +2,7 @@
   import { globals } from '../globals.svelte.js';
   import { colorTags } from '../color-tags.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
-  import { removeTracksFromPlaylist, setNodeSort, reorderTracksInPlaylist } from '../tree-management.svelte.js';
+  import { removeTracksFromPlaylist, setNodeSort, reorderTracksInPlaylist, addTracksToPlaylist, deleteTracksFromLibrary } from '../tree-management.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
   import { toMediaUrl } from '../helpers.svelte.js';
   import { getSortedTracks, nextSortDirection, TAG_CYCLE } from '../sort.js';
@@ -313,6 +313,67 @@
     tooltipComment = null;
   }
 
+  // External file drop (from Finder / OS)
+  const AUDIO_EXTS = new Set(['.mp3', '.m4a', '.aac', '.flac', '.wav', '.ogg', '.opus', '.aiff', '.aif']);
+
+  let externalDragOver = $state(false);
+  let isDropAllowed = $derived(!selectedFolderView && playlist?.type === 'playlist');
+
+  function isExternalFileDrag(e) {
+    return isDropAllowed && [...(e.dataTransfer?.types ?? [])].includes('Files');
+  }
+
+  function handleExternalDragEnter(e) {
+    if (!isExternalFileDrag(e)) return;
+    e.preventDefault();
+    externalDragOver = true;
+  }
+
+  function handleExternalDragOver(e) {
+    if (!isExternalFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  }
+
+  function handleExternalDragLeave(e) {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    externalDragOver = false;
+  }
+
+  async function handleExternalDrop(e) {
+    e.preventDefault();
+    externalDragOver = false;
+
+    if (!isDropAllowed) return;
+
+    const files = [...e.dataTransfer.files].filter(f => {
+      const ext = f.name.slice(f.name.lastIndexOf('.')).toLowerCase();
+      return AUDIO_EXTS.has(ext);
+    });
+
+    if (!files.length) return;
+
+    const vdjDbPath = globals.get('vdjDatabasePath') ?? null;
+
+    for (const file of files) {
+
+      const filePath = window.electronAPI.getPathForFile(file);
+
+      const result = await window.electronAPI.addTrack(filePath, vdjDbPath);
+
+      if (!result.success) continue;
+
+      const { track } = result;
+
+      globals.update('library', lib => {
+        lib.tracks[String(track.trackId)] = track;
+        return lib;
+      });
+
+      addTracksToPlaylist(selectedPlaylistId, [track.trackId]);
+    }
+  }
+
   let _dragActive = false;
   let _fileDragStarted = false;
 
@@ -520,6 +581,17 @@
           if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
         },
       },
+      { type: 'separator' },
+      {
+        icon: 'trash',
+        text: 'Delete from library',
+        callback: () => {
+
+          deleteTracksFromLibrary(ids);
+          selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
+          if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+        },
+      },
     ], row, 'mouse', 'target');
   }
 
@@ -552,7 +624,16 @@
 
     </div>
 
-    <div class="track-scroll" bind:this={trackScrollEl}>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="track-scroll"
+      class:external-drag-over={externalDragOver}
+      bind:this={trackScrollEl}
+      ondragenter={handleExternalDragEnter}
+      ondragover={handleExternalDragOver}
+      ondragleave={handleExternalDragLeave}
+      ondrop={handleExternalDrop}
+    >
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -695,6 +776,14 @@
 
     padding: 0 1em 0 1em;
     box-sizing: border-box;
+
+    border-radius: var(--brad2);
+    box-shadow: inset 0 0 0 0 transparent;
+    transition: box-shadow var(--td-150);
+  }
+
+  .track-scroll.external-drag-over {
+    box-shadow: inset 0 0 0 2px var(--meadow-green);
   }
 
   .track-row {

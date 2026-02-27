@@ -100,6 +100,37 @@ export function removeTracksFromPlaylist(playlistId, trackIds) {
   saveHierarchy();
 }
 
+// Removes trackIds from every playlist in the hierarchy and from library.tracks.
+// Persists both hierarchy.json and tracks.json.
+export function deleteTracksFromLibrary(trackIds) {
+
+  const toRemove = new Set(trackIds.map(String));
+
+  function walkAndRemove(nodes) {
+    for (const node of nodes) {
+
+      if (node.type === 'playlist' && node.trackIds) {
+        node.trackIds = node.trackIds.filter(id => !toRemove.has(String(id)));
+      }
+
+      if (node.children) walkAndRemove(node.children);
+    }
+  }
+
+  globals.update('library', current => {
+
+    walkAndRemove(current.hierarchy);
+    current.index = rebuildIndex(current.hierarchy);
+
+    for (const id of toRemove) delete current.tracks[id];
+
+    return current;
+  });
+
+  saveHierarchy();
+  window.electronAPI?.deleteTracks([...toRemove]);
+}
+
 // Appends unique trackIds to a playlist node. Persists hierarchy.json.
 export function addTracksToPlaylist(playlistId, trackIds) {
   const library = globals.get('library');

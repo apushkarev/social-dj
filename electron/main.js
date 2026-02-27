@@ -1,7 +1,8 @@
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
-import { fileURLToPath } from 'url';
-import { dirname, join, resolve, extname } from 'path';
-import { writeFileSync, mkdirSync, statSync, createReadStream } from 'fs';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { dirname, join, resolve, extname, basename } from 'path';
+import { writeFileSync, readFileSync, mkdirSync, statSync, createReadStream } from 'fs';
+import { randomBytes } from 'crypto';
 import { Readable } from 'stream';
 import plist from 'plist';
 
@@ -112,6 +113,138 @@ function buildHierarchy(flatItems) {
 
   return { hierarchy: roots, index };
 }
+
+// --- VDJ database parser ---
+
+// Finds and returns raw metadata for a single song from the VDJ XML string.
+// filePath must match the VDJ <Song FilePath="..."> attribute exactly
+// (raw filesystem path, not URI-encoded).
+function findVdjSong(xmlContent, filePath) {
+
+  const searchStr = `FilePath="${filePath}"`;
+  const filePathIdx = xmlContent.indexOf(searchStr);
+  if (filePathIdx === -1) return null;
+
+  const songStart = xmlContent.lastIndexOf('<Song ', filePathIdx);
+  if (songStart === -1) return null;
+
+  const songEnd = xmlContent.indexOf('</Song>', filePathIdx);
+  if (songEnd === -1) return null;
+
+  const block = xmlContent.slice(songStart, songEnd + 7);
+
+  const getAttr = (str, name) => {
+    const m = new RegExp(`\\b${name}="([^"]*)"`, 'i').exec(str);
+    return m ? m[1] : null;
+  };
+
+  const tagsMatch  = /<Tags\b([^>]*)\/?>/i.exec(block);
+  const infosMatch = /<Infos\b([^>]*)\/?>/i.exec(block);
+  const scanMatch  = /<Scan\b([^>]*)\/?>/i.exec(block);
+  const commentMatch = /<Comment>([^<]*)<\/Comment>/i.exec(block);
+
+  const tagsAttrs  = tagsMatch  ? tagsMatch[1]  : '';
+  const infosAttrs = infosMatch ? infosMatch[1] : '';
+  const scanAttrs  = scanMatch  ? scanMatch[1]  : '';
+
+  const scanBpm  = parseFloat(getAttr(scanAttrs,  'Bpm') ?? '0');
+  const tagsBpm  = parseFloat(getAttr(tagsAttrs,  'Bpm') ?? '0');
+  const bpmRaw   = scanBpm || tagsBpm || 0;
+
+  return {
+    title:        getAttr(tagsAttrs,  'Title'),
+    author:       getAttr(tagsAttrs,  'Author'),
+    bpm:          bpmRaw ? Math.round(60 / bpmRaw) : 0,
+    totalTime:    Math.round(parseFloat(getAttr(infosAttrs, 'SongLength') ?? '0') * 1000),
+    lastModified: parseInt(getAttr(infosAttrs, 'LastModified') ?? '0', 10),
+    firstSeen:    parseInt(getAttr(infosAttrs, 'FirstSeen')    ?? '0', 10),
+    comment:      commentMatch ? commentMatch[1].trim() : '',
+  };
+}
+
+ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
+  try {
+    const libraryDir = resolve(__dirname, '..', 'public', 'library');
+    const tracksPath = resolve(libraryDir, 'tracks.json');
+
+    const { tracks } = JSON.parse(readFileSync(tracksPath, 'utf-8'));
+
+    // Return existing track if already in library (same location)
+    const location = pathToFileURL(filePath).href;
+    const existing = Object.values(tracks).find(t => t.location === location);
+    if (existing) return { success: true, track: existing };
+
+    // New track ID
+    const ids = Object.keys(tracks).map(k => parseInt(k, 10)).filter(n => !isNaN(n));
+    const newId = ids.length ? Math.max(...ids) + 1 : 1;
+
+    const persistentId = randomBytes(8).toString('hex').toUpperCase();
+
+    // Metadata defaults — derived from filename if VDJ lookup fails
+    let name     = basename(filePath, extname(filePath));
+    let artist   = '';
+    let bpm      = 0;
+    let totalTime = 0;
+    let comments  = '';
+    let dateModified = new Date().toISOString();
+    let dateAdded    = new Date().toISOString();
+
+    if (vdjDbPath) {
+      try {
+        const vdjContent = readFileSync(vdjDbPath, 'utf-8');
+        const song = findVdjSong(vdjContent, filePath);
+
+        if (song) {
+          if (song.title)        name     = song.title;
+          if (song.author)       artist   = song.author;
+          if (song.bpm)          bpm      = song.bpm;
+          if (song.totalTime)    totalTime = song.totalTime;
+          if (song.comment)      comments = song.comment;
+          if (song.lastModified) dateModified = new Date(song.lastModified * 1000).toISOString();
+          if (song.firstSeen)    dateAdded    = new Date(song.firstSeen    * 1000).toISOString();
+        }
+      } catch {}
+    }
+
+    const track = {
+      trackId:     newId,
+      name,
+      artist,
+      totalTime,
+      bpm,
+      structure:   [],
+      beatgrid:    0,
+      tags:        [],
+      dateModified,
+      dateAdded,
+      comments,
+      persistentId,
+      trackType:   'File',
+      location,
+    };
+
+    tracks[String(newId)] = track;
+    writeFileSync(tracksPath, JSON.stringify({ tracks }, null, 2));
+
+    return { success: true, track };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('delete-tracks', (_event, trackIds) => {
+  try {
+    const tracksPath = resolve(__dirname, '..', 'public', 'library', 'tracks.json');
+    const { tracks } = JSON.parse(readFileSync(tracksPath, 'utf-8'));
+
+    for (const id of trackIds) delete tracks[String(id)];
+
+    writeFileSync(tracksPath, JSON.stringify({ tracks }, null, 2));
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
 
 ipcMain.handle('save-hierarchy', (_event, data) => {
   try {
