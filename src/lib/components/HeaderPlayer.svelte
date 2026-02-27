@@ -193,6 +193,11 @@
 
   async function handleSoundOutputClick(e) {
 
+    if (contextMenu.visible) {
+      contextMenu.hide();
+      return;
+    }
+
     const buttonEl = e.currentTarget;
 
     let devices;

@@ -20,8 +20,6 @@ export const contextMenu = {
     state.visible = true;
     state.anchorAlignX = aaX;
     state.anchorAlignY = aaY;
-
-    console.log(state);
   },
 
   hide() {
