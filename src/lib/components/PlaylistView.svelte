@@ -22,11 +22,12 @@
 
   // Reorder drag state
   let reorderActive = $state(false);
-  let reorderDropIndex = $state(null);
   let reorderingTrackIds = $state(new Set());
+  let liveOrderIds = $state(null);   // null = not dragging; array = live-reordered track IDs
   let trackScrollEl = $state(null);
 
   let _dragIds = [];
+  let _originalTrackIds = [];        // snapshot of sortedTracks order at drag start
   let _pollInterval = null;
   let _pollActive = false;
 
@@ -262,6 +263,13 @@
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
 
+  // During reorder drag shows live-reordered list; otherwise shows normal sorted list.
+  let displayTracks = $derived(
+    liveOrderIds
+      ? liveOrderIds.map(id => library?.tracks[String(id)]).filter(Boolean)
+      : sortedTracks
+  );
+
   // num/ascending IS the original order — don't treat it as a sort that blocks reordering
   let isSorted = $derived(
     sortColumn !== null &&
@@ -302,11 +310,7 @@
   }
 
   let _dragActive = false;
-
-  function dlog(...args) {
-    console.log('[drag]', ...args);
-    window.electronAPI?.log('[drag]', ...args);
-  }
+  let _fileDragStarted = false;
 
   function getDropIndexFromY(clientY) {
 
@@ -345,14 +349,14 @@
 
   // Polls getCursorScreenPoint() via IPC every 16ms during native drag.
   // pointermove stops firing once startFileDrag hands off to the OS; this keeps
-  // the drop indicator in sync throughout the drag.
+  // the live order in sync throughout the drag.
   function startCursorPoll() {
 
     _pollActive = true;
 
     _pollInterval = setInterval(async () => {
 
-      if (!_pollActive || !trackScrollEl || !reorderActive) return;
+      if (!_pollActive || !trackScrollEl || !reorderActive || !isReorderAllowed) return;
 
       const pos = await window.electronAPI.getCursorScreenPoint();
 
@@ -362,7 +366,11 @@
       const inside = pos.x >= rect.left && pos.x <= rect.right &&
                      pos.y >= rect.top  && pos.y <= rect.bottom;
 
-      reorderDropIndex = inside && isReorderAllowed ? getDropIndexFromY(pos.y) : null;
+      if (inside) {
+        const dropIdx = getDropIndexFromY(pos.y);
+        liveOrderIds = computeReorderedIds(liveOrderIds, _dragIds, dropIdx);
+      }
+      // When outside: keep last live order (don't revert)
 
     }, 16);
   }
@@ -379,10 +387,7 @@
     // e.preventDefault() means ondragend never fires, but we use pointerup for end detection.
     e.preventDefault();
 
-    if (_dragActive) {
-      dlog('start: already active, ignoring');
-      return;
-    }
+    if (_dragActive) return;
     _dragActive = true;
 
     _dragIds = selectedTrackIds.has(track.trackId)
@@ -392,35 +397,24 @@
     reorderingTrackIds = new Set(_dragIds.map(String));
     reorderActive = true;
 
-    dlog('start: trackId=%s, dragIds=%o', track.trackId, _dragIds);
+    _originalTrackIds = sortedTracks.map(t => t.trackId);
+    liveOrderIds = [..._originalTrackIds];
 
     dragStore.start(_dragIds, selectedPlaylistId ?? null);
 
-    const fileLocations = _dragIds
-      .map(id => library?.tracks[String(id)]?.location)
-      .filter(Boolean);
-
-    dlog('start: calling startFileDrag with %d file(s)', fileLocations.length);
-    if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
-    dlog('start: startFileDrag returned');
-
     startCursorPoll();
-    dlog('start: poll started, registering listeners');
 
     // pointerup fires if the OS forwards the mouseUp to the renderer (not always).
     document.addEventListener('pointerup', handleDragPointerUp, true);
     window.addEventListener('pointerup', handleDragPointerUp);
 
-    // pointermove + e.buttons === 0 is the reliable fallback:
-    // after native drag ends the OS does NOT forward mouseUp, but the next
-    // mouse move fires pointermove in the renderer with buttons === 0.
+    // pointermove + e.buttons === 0 is the reliable fallback for LMB release detection.
     document.addEventListener('pointermove', handleDragPointerMove, true);
-
-    dlog('start: done');
   }
 
-  // Fallback drag-end detection: fires on the first mouse move after native drag ends.
-  // At that point e.buttons === 0 tells us LMB was already released.
+  // Handles both drag-end detection (buttons=0) and deferred external file drag
+  // (cursor left the window while LMB is held).
+  // pointermove fires outside window bounds via pointer capture while LMB is pressed.
   function handleDragPointerMove(e) {
 
     if (!_dragActive) {
@@ -428,63 +422,54 @@
       return;
     }
 
-    if (e.buttons !== 0) return;
+    if (e.buttons === 0) {
+      handleDragPointerUp();
+      return;
+    }
 
-    dlog('pointermove: LMB released (buttons=0), ending drag');
-    handleDragPointerUp();
+    // Cursor has left the window — start native file drag for external drop.
+    if (!_fileDragStarted) {
+      const outside = e.clientX < 0 || e.clientX > window.innerWidth ||
+                      e.clientY < 0 || e.clientY > window.innerHeight;
+      if (outside) {
+        liveOrderIds = [..._originalTrackIds];
+        _fileDragStarted = true;
+        const fileLocations = _dragIds
+          .map(id => library?.tracks[String(id)]?.location)
+          .filter(Boolean);
+        if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
+      }
+    }
   }
 
-  // Primary drag-end handler. Called via pointerup after native drag completes.
-  // Gets the final cursor position via IPC (one-shot) to decide whether to commit reorder.
-  async function handleDragPointerUp() {
-
-    dlog('pointerup fired: _dragActive=%s', _dragActive);
+  // Primary drag-end handler. Called via pointerup or pointermove-buttons=0.
+  // Saves the current live order (already computed by the poll) and cleans up.
+  function handleDragPointerUp() {
 
     if (!_dragActive) return;
 
-    // Prevent re-entry from both document and window listeners firing simultaneously.
+    // Prevent re-entry from multiple listeners firing.
     _dragActive = false;
+    _fileDragStarted = false;
     document.removeEventListener('pointerup', handleDragPointerUp, true);
     window.removeEventListener('pointerup', handleDragPointerUp);
     document.removeEventListener('pointermove', handleDragPointerMove, true);
 
     stopCursorPoll();
 
-    dlog('pointerup: poll stopped, checking reorder: reorderActive=%s isReorderAllowed=%s', reorderActive, isReorderAllowed);
-
-    if (reorderActive && isReorderAllowed) {
-
-      const pos = await window.electronAPI.getCursorScreenPoint();
-
-      dlog('pointerup: cursor pos=%o', pos);
-
-      if (pos && trackScrollEl) {
-
-        const rect = trackScrollEl.getBoundingClientRect();
-        const inside = pos.x >= rect.left && pos.x <= rect.right &&
-                       pos.y >= rect.top  && pos.y <= rect.bottom;
-
-        dlog('pointerup: scrollRect=%o inside=%s reorderDropIndex=%s', rect, inside, reorderDropIndex);
-
-        if (inside) {
-          const dropIdx = reorderDropIndex ?? getDropIndexFromY(pos.y);
-          dlog('pointerup: committing reorder at dropIdx=%s', dropIdx);
-          const visualIds = sortedTracks.map(t => t.trackId);
-          const newOrder = computeReorderedIds(visualIds, _dragIds, dropIdx);
-          reorderTracksInPlaylist(selectedPlaylistId, newOrder);
-        } else {
-          dlog('pointerup: cursor outside scroll area — no reorder');
-        }
-      }
+    // liveOrderIds already reflects the final position from real-time polling.
+    // Save it if reordering was active and the order changed.
+    if (reorderActive && isReorderAllowed && liveOrderIds) {
+      reorderTracksInPlaylist(selectedPlaylistId, liveOrderIds);
     }
 
     reorderActive = false;
-    reorderDropIndex = null;
+    liveOrderIds = null;
+    _originalTrackIds = [];
     reorderingTrackIds = new Set();
     _dragIds = [];
 
     dragStore.end();
-    dlog('pointerup: cleanup done');
   }
 
   function handleHeaderClick(col) {
@@ -599,10 +584,7 @@
         </div>
       </div>
 
-      {#each sortedTracks as track, i (track.trackId)}
-        {#if reorderActive && isReorderAllowed && reorderDropIndex === i}
-          <div class="drop-target"></div>
-        {/if}
+      {#each displayTracks as track, i (track.trackId)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
@@ -636,9 +618,6 @@
           >{track.comments ?? ''}</div>
         </div>
       {/each}
-      {#if reorderActive && isReorderAllowed && reorderDropIndex === sortedTracks.length}
-        <div class="drop-target"></div>
-      {/if}
 
     </div>
 
@@ -884,17 +863,9 @@
     border-radius: var(--brad2);
   }
 
-  .drop-target {
-    height: 3em;
-    min-width: max-content;
-    outline: 2px solid var(--meadow-green);
-    border-radius: 2px;
-    pointer-events: none;
-    margin: 1px 0;
-  }
-
   .data-row.reordering {
     background-color: var(--overlay5);
+    box-shadow: inset 0 0 0 2px var(--meadow-green);
   }
 
   .comment-tooltip {

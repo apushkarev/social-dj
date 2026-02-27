@@ -9,5 +9,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
   getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
-  log: (...args) => ipcRenderer.send('log', args),
 });

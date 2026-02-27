@@ -151,10 +151,6 @@ ipcMain.handle('show-open-dialog', async (event, options) => {
   return dialog.showOpenDialog(win, options);
 });
 
-ipcMain.on('log', (_event, args) => {
-  console.log('[renderer]', ...args);
-});
-
 ipcMain.on('write-app-state', (_event, data) => {
   try {
     const publicDir = resolve(__dirname, '..', 'public');
