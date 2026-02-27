@@ -37,9 +37,8 @@
         let ax, ay;
 
         if (anchor) {
+          
           const rect = anchor.getBoundingClientRect();
-
-          console.log({ aaX, aaY});
 
           if (aaX == 'target') {
             ax = rect.right - rect.width;  
