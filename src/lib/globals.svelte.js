@@ -11,6 +11,10 @@ let globalStorage = $state({
     header: null // apple music default mode, single output or pre-audition
   },
 
+  soundOutputs: {
+    header: null
+  },
+
   currentlyPlayingTrackId: null,
   currentViewTracks: [],
 

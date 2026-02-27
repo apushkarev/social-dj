@@ -13,7 +13,34 @@ const PERSISTED_KEYS = [
   'fontSize',
   'volume',
   'vdjDatabasePath',
+  'soundOutputs',
 ];
+
+// Checks saved soundOutputs against currently available devices.
+// Resets any device that's no longer present to null (system default).
+async function validateSoundOutputs() {
+  try {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    const availableIds = new Set(
+      all.filter(d => d.kind === 'audiooutput').map(d => d.deviceId)
+    );
+
+    const saved = globals.get('soundOutputs') ?? {};
+    const validated = { ...saved };
+    let changed = false;
+
+    for (const key of Object.keys(validated)) {
+      const deviceId = validated[key];
+
+      if (deviceId && !availableIds.has(deviceId)) {
+        validated[key] = null;
+        changed = true;
+      }
+    }
+
+    if (changed) globals.set('soundOutputs', validated);
+  } catch {}
+}
 
 // Loads persisted state from app-state.json into globals.
 // Call once before mounting the app.
@@ -29,6 +56,8 @@ export async function initAppState() {
       }
     }
   } catch {}
+
+  await validateSoundOutputs();
 }
 
 // Writes all persisted globals to app-state.json.

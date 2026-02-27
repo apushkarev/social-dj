@@ -138,9 +138,30 @@ export const icons = {
       <line x1="4.5" y1="6" x2="4.5" y2="12" stroke="currentColor" stroke-width="2" />
     </svg>
   `,
+
+  volumeContextMenu: `
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28.7451 25.57C29.7631 23.8886 30.3126 21.9654 30.3365 20C30.3126 18.0346 29.7631 16.1114 28.7451 14.43" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M25.57 17.6129C26.1232 18.2817 26.4069 19.133 26.3657 20C26.4069 20.867 26.1232 21.7183 25.57 22.3871" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M13.6343 16.8172H11.2471C10.3803 16.8172 9.65571 17.5418 9.65571 18.4086V21.5915C9.65571 22.4582 10.3803 23.1829 11.2471 23.1829H13.6343L19.8568 27.6548C20.8837 28.3653 22.3594 27.6172 22.3871 26.3657V13.6343C22.417 12.3821 21.0298 11.6327 20 12.3452L13.6343 16.8172Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <line x1="13.8333" y1="16.5" x2="13.8333" y2="23.5" stroke="currentColor" stroke-linecap="round" />
+    </svg>
+  `,
+
   arrowDown: `
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M11 16L19.7836 24.7836C19.8477 24.8519 19.9251 24.9064 20.0111 24.9436C20.0971 24.9808 20.1898 25 20.2835 25C20.3772 25 20.4699 24.9808 20.5558 24.9436C20.6418 24.9064 20.7192 24.8519 20.7834 24.7836L29.567 16" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>  
   `,
+
+  loudspeaker: `
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13.7743 1.24179H4.22571C3.56653 1.24179 3.03214 1.77617 3.03214 2.43536V15.5646C3.03214 16.2239 3.56653 16.7582 4.22571 16.7582H13.7743C14.4335 16.7582 14.9679 16.2239 14.9679 15.5646V2.43536C14.9679 1.77617 14.4335 1.24179 13.7743 1.24179Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M9 14.3711C10.648 14.3711 11.9839 13.0351 11.9839 11.3871C11.9839 9.73917 10.648 8.40321 9 8.40321C7.35202 8.40321 6.01607 9.73917 6.01607 11.3871C6.01607 13.0351 7.35202 14.3711 9 14.3711Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M9 11.6855C8.8352 11.6855 8.70161 11.5519 8.70161 11.3871C8.70161 11.2223 8.8352 11.0888 9 11.0888" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M9 11.6855C9.1648 11.6855 9.29839 11.5519 9.29839 11.3871C9.29839 11.2223 9.1648 11.0888 9 11.0888" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M9 5.27009C8.7528 5.27009 8.55241 5.0697 8.55241 4.8225C8.55241 4.5753 8.7528 4.37491 9 4.37491" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M9 5.27009C9.2472 5.27009 9.44759 5.0697 9.44759 4.8225C9.44759 4.5753 9.2472 4.37491 9 4.37491" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  `
 };

@@ -6,6 +6,7 @@
   import { globals } from '../globals.svelte.js';
   import { formatTime, toMediaUrl, toAudioVolume } from '../helpers.svelte.js';
   import { saveAppState } from '../app-state.svelte.js';
+  import { contextMenu } from '../context-menu.svelte.js';
 
   const PLAYBAR_WIDTH = 400;
 
@@ -45,6 +46,12 @@
 
     globals.update('audio', a => ({ ...a, header: audioEl }));
     audioEl.volume = toAudioVolume(globals.get('volume')?.header ?? 0.5);
+
+    const savedOutput = globals.get('soundOutputs')?.header;
+
+    if (savedOutput && audioEl.setSinkId) {
+      audioEl.setSinkId(savedOutput).catch(() => {});
+    }
 
     return () => globals.update('audio', a => ({ ...a, header: null }));
   });
@@ -184,6 +191,45 @@
     playbarProgress = x / rect.width;
   }
 
+  async function handleSoundOutputClick(e) {
+
+    let devices;
+
+    try {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      devices = all.filter(d => d.kind === 'audiooutput');
+    } catch {
+      return;
+    }
+
+    if (!devices.length) return;
+
+    const savedOutput = globals.get('soundOutputs')?.header;
+    const currentDeviceId = savedOutput ?? 'default';
+
+    const items = devices.map(device => {
+
+      const isSelected = device.deviceId === currentDeviceId;
+      const label = device.label || 'Unknown Device';
+
+      return {
+        icon: 'volumeContextMenu',
+        text: (isSelected ? '✓ ' : '') + label,
+        callback: () => {
+
+          if (audioEl.setSinkId) {
+            audioEl.setSinkId(device.deviceId).catch(() => {});
+          }
+
+          globals.update('soundOutputs', s => ({ ...s, header: device.deviceId }));
+          saveAppState();
+        }
+      };
+    });
+
+    contextMenu.show(e.clientX, e.clientY, items);
+  }
+
   function toggleMute() {
 
     const current = globals.get('volume')?.header ?? 0.5;
@@ -297,6 +343,8 @@
     </div>
 
   </div>
+
+  <IconButton icon={icons.loudspeaker} onclick={handleSoundOutputClick} />
 
 </div>
 

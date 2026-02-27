@@ -132,6 +132,8 @@
     user-select: none;
 
     border-radius: var(--brad1);
+
+    margin-bottom: 0.25em;
   }
 
   .menu-item.active {
