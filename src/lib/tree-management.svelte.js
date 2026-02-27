@@ -20,12 +20,20 @@ export function rebuildIndex(hierarchy) {
   return index;
 }
 
+let _saveTimer = null;
+
 function saveHierarchy() {
-  const lib = globals.get('library');
-  window.electronAPI.saveHierarchy({
-    hierarchy: $state.snapshot(lib.hierarchy),
-    index: $state.snapshot(lib.index),
-  });
+
+  clearTimeout(_saveTimer);
+
+  _saveTimer = setTimeout(() => {
+    _saveTimer = null;
+    const lib = globals.get('library');
+    window.electronAPI.saveHierarchy({
+      hierarchy: $state.snapshot(lib.hierarchy),
+      index: $state.snapshot(lib.index),
+    });
+  }, 300);
 }
 
 // Removes the node with nodeId from the hierarchy, rebuilds index, persists.
@@ -180,6 +188,7 @@ export function moveTreeNode(nodeId, targetFolderId) {
 export function reorderTracksInPlaylist(playlistId, newTrackIds) {
 
   const library = globals.get('library');
+
   const path = library.index[playlistId];
   if (!path) return;
 
@@ -201,7 +210,7 @@ export function reorderTracksInPlaylist(playlistId, newTrackIds) {
   saveHierarchy();
 }
 
-// Sets sortColumn and sortDirection on a node. Persists hierarchy.json.
+// Sets sortColumn
 export function setNodeSort(nodeId, sortColumn, sortDirection) {
 
   const library = globals.get('library');

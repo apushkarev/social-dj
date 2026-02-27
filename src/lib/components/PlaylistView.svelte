@@ -11,7 +11,6 @@
 
   let library            = $derived(globals.get('library'));
   let selectedPlaylistId = $derived(globals.get('selectedPlaylistId'));
-  $inspect(selectedPlaylistId)
   let selectedFolderView = $derived(globals.get('selectedFolderView'));
 
   let selectedTrackIds = $state(new Set());
@@ -24,13 +23,11 @@
   // Reorder drag state
   let reorderActive = $state(false);
   let reorderDropIndex = $state(null);
+  let reorderingTrackIds = $state(new Set());
   let trackScrollEl = $state(null);
 
-  let _reorderPending = false;
-  let _reorderStartX = 0;
-  let _reorderStartY = 0;
-  let _reorderIds = [];
-  let reorderGhostEl = null;
+  let _dragIds = [];
+  let _pollInterval = null;
 
   $effect(() => {
     selectedPlaylistId;
@@ -395,129 +392,100 @@
     ];
   }
 
-  function cleanupReorderState() {
+  // Polls screen.getCursorScreenPoint() via IPC every 16ms during native drag.
+  // pointermove stops firing once startFileDrag hands off to the OS; this keeps
+  // the drop indicator in sync throughout the drag.
+  let _t0 = 0;
 
-    _reorderPending = false;
-    reorderActive = false;
-    reorderDropIndex = null;
-    reorderGhostEl?.remove();
-    reorderGhostEl = null;
+  function startCursorPoll() {
 
-    document.removeEventListener('pointermove', handleReorderPointerMove);
-    document.removeEventListener('pointerup', handleReorderPointerUp);
-    document.removeEventListener('pointercancel', handleReorderPointerUp);
+    _pollInterval = setInterval(async () => {
+
+      if (!trackScrollEl || !reorderActive) return;
+
+      const pos = await window.electronAPI.getCursorScreenPoint();
+
+      if (!pos) return;
+
+      const rect = trackScrollEl.getBoundingClientRect();
+      const inside = pos.x >= rect.left && pos.x <= rect.right &&
+                     pos.y >= rect.top  && pos.y <= rect.bottom;
+
+      reorderDropIndex = inside && isReorderAllowed ? getDropIndexFromY(pos.y) : null;
+
+    }, 16);
   }
 
-  function handleRowPointerDown(e, track) {
-
-    if (e.button !== 0) return;
-
-    _reorderPending = true;
-    _reorderStartX = e.clientX;
-    _reorderStartY = e.clientY;
-
-    _reorderIds = selectedTrackIds.has(track.trackId)
-      ? sortedTracks.filter(t => selectedTrackIds.has(t.trackId)).map(t => t.trackId)
-      : [track.trackId];
-
-    document.addEventListener('pointermove', handleReorderPointerMove);
-    document.addEventListener('pointerup', handleReorderPointerUp);
-    document.addEventListener('pointercancel', handleReorderPointerUp);
-  }
-
-  function handleReorderPointerMove(e) {
-
-    if (!_reorderPending && !reorderActive) return;
-
-    const dx = e.clientX - _reorderStartX;
-    const dy = e.clientY - _reorderStartY;
-
-    if (!reorderActive && Math.sqrt(dx * dx + dy * dy) > 4) {
-
-      reorderActive = true;
-
-      reorderGhostEl = document.createElement('img');
-      reorderGhostEl.src = './drag_image.png';
-      reorderGhostEl.style.cssText = [
-        'position: fixed',
-        'pointer-events: none',
-        'z-index: 9999',
-        'width: 48px',
-        'height: 48px',
-        'object-fit: contain',
-        'opacity: 0.85',
-        'top: -1000px',
-        'left: -1000px',
-      ].join(';');
-      document.body.appendChild(reorderGhostEl);
-    }
-
-    if (reorderActive) {
-
-      if (reorderGhostEl) {
-        reorderGhostEl.style.left = `${e.clientX + 16}px`;
-        reorderGhostEl.style.top  = `${e.clientY - 32}px`;
-      }
-
-      if (trackScrollEl && isReorderAllowed) {
-        reorderDropIndex = getDropIndexFromY(e.clientY);
-      }
-    }
-  }
-
-  function handleReorderPointerUp() {
-
-    if (reorderActive && isReorderAllowed && reorderDropIndex !== null) {
-
-      const visualIds = sortedTracks.map(t => t.trackId);
-      const newOrder = computeReorderedIds(visualIds, _reorderIds, reorderDropIndex);
-
-      reorderTracksInPlaylist(selectedPlaylistId, newOrder);
-    }
-
-    cleanupReorderState();
+  function stopCursorPoll() {
+    clearInterval(_pollInterval);
+    _pollInterval = null;
   }
 
   function handleDragStart(e, track) {
 
-    // Internal reorder gesture takes priority — suppress native file drag
+    // Prevent the HTML5 drag ghost — the native OS icon from startFileDrag is used instead
     e.preventDefault();
-    if (_reorderPending || reorderActive) return;
 
-    // Re-entrancy guard: browser re-fires dragstart on every mousemove when
-    // the previous dragstart was preventDefault-ed; only start once per gesture
     if (_dragActive) return;
     _dragActive = true;
 
-    const ids = selectedTrackIds.has(track.trackId)
-      ? [...selectedTrackIds]
+    _dragIds = selectedTrackIds.has(track.trackId)
+      ? sortedTracks.filter(t => selectedTrackIds.has(t.trackId)).map(t => t.trackId)
       : [track.trackId];
 
-    dragStore.start(ids, selectedPlaylistId ?? null);
+    reorderingTrackIds = new Set(_dragIds.map(String));
+    reorderActive = true;
 
-    // Native file drag
-    const fileLocations = ids
+    dragStore.start(_dragIds, selectedPlaylistId ?? null);
+
+    const fileLocations = _dragIds
       .map(id => library?.tracks[String(id)]?.location)
       .filter(Boolean);
     if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
 
-    // Badge ghost for in-app visual feedback
-    // (macOS shows its own native file-count badge, so this is redundant there;
-    //  kept here for potential use on other platforms)
-    // dragGhostEl = createDragGhost(ids.length);
-    // dragGhostEl.style.left = `${e.clientX + 14}px`;
-    // dragGhostEl.style.top  = `${e.clientY + 14}px`;
-    // document.body.appendChild(dragGhostEl);
-    // document.addEventListener('dragover',  handleDragMove, true);
-    // document.addEventListener('dragleave', handleDragLeaveWindow);
+    startCursorPoll();
 
-    // Cleanup listeners — always needed to reset _dragActive after drag ends
-    document.addEventListener('mouseup',  cleanupDrag, true);
-    window.addEventListener('pointerup',  cleanupDrag);
+    document.addEventListener('mouseup', handleDragMouseUp, true);
+  }
+
+  // Fired when the native drag ends (internal drop or external drop).
+  // Commits reorder only if the cursor was inside the scroll area at release time.
+  function handleDragMouseUp() {
+
+    stopCursorPoll();
+
+    if (reorderActive && isReorderAllowed && reorderDropIndex !== null) {
+
+      const visualIds = sortedTracks.map(t => t.trackId);
+      const newOrder = computeReorderedIds(visualIds, _dragIds, reorderDropIndex);
+
+      reorderTracksInPlaylist(selectedPlaylistId, newOrder);
+    }
+
+    reorderActive = false;
+    reorderDropIndex = null;
+    reorderingTrackIds = new Set();
+    _dragIds = [];
+    _dragActive = false;
+
+    dragStore.end();
+
+    document.removeEventListener('mouseup', handleDragMouseUp, true);
   }
 
   function handleDragEnd() {
-    cleanupDrag();
+
+    // Safety net: if mouseup didn't fire (e.g. drag cancelled via Escape)
+    stopCursorPoll();
+    reorderActive = false;
+    reorderDropIndex = null;
+    reorderingTrackIds = new Set();
+    _dragIds = [];
+
+    if (_dragActive) {
+      _dragActive = false;
+      dragStore.end();
+    }
   }
 
   function handleHeaderClick(col) {
@@ -642,14 +610,13 @@
           class="track-row data-row"
           class:selected={selectedTrackIds.has(track.trackId)}
           class:playing={track.trackId === playingTrackId}
-          class:reordering={reorderActive && isReorderAllowed && _reorderIds.includes(track.trackId)}
+          class:reordering={reorderActive && isReorderAllowed && reorderingTrackIds.has(String(track.trackId))}
           draggable="true"
           onclick={(e) => handleRowClick(e, track.trackId)}
           ondblclick={() => handleRowDblClick(track.trackId)}
           oncontextmenu={(e) => handleTrackContextMenu(e, track)}
           ondragstart={(e) => handleDragStart(e, track)}
           ondragend={handleDragEnd}
-          onpointerdown={(e) => handleRowPointerDown(e, track)}
         >
           <div class="col col-num">{i + 1}</div>
           <div class="col col-tag">
@@ -920,9 +887,9 @@
   }
 
   .drop-line {
-    height: 2px;
+    height: 3em;
     min-width: max-content;
-    background-color: var(--meadow-green);
+    outline: 2px solid var(--meadow-green);
     border-radius: 2px;
     pointer-events: none;
     margin: 1px 0;

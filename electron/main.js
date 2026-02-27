@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage, protocol, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve, extname } from 'path';
 import { writeFileSync, mkdirSync, statSync, createReadStream } from 'fs';
@@ -249,6 +249,16 @@ app.whenReady().then(() => {
         'Content-Type': contentType,
       },
     });
+  });
+
+  // Returns cursor position in window-local coordinates.
+  // Called during native drag when pointer events stop firing in the renderer.
+  ipcMain.handle('get-cursor-screen-point', () => {
+    const { x, y } = screen.getCursorScreenPoint();
+    const win = BrowserWindow.getAllWindows()[0];
+    if (!win) return null;
+    const bounds = win.getContentBounds();
+    return { x: x - bounds.x, y: y - bounds.y };
   });
 
   createWindow();

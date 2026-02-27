@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   writeAppState: (data) => ipcRenderer.send('write-app-state', data),
   saveHierarchy: (data) => ipcRenderer.invoke('save-hierarchy', data),
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
+  getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
 });
