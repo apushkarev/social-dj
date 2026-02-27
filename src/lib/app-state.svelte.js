@@ -12,6 +12,7 @@ const PERSISTED_KEYS = [
   'selectedFolderView',
   'fontSize',
   'volume',
+  'vdjDatabasePath',
 ];
 
 // Loads persisted state from app-state.json into globals.

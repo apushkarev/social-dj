@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveHierarchy: (data) => ipcRenderer.invoke('save-hierarchy', data),
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
   getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
+  showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
 });

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join, resolve, extname } from 'path';
 import { writeFileSync, mkdirSync, statSync, createReadStream } from 'fs';
@@ -144,6 +144,11 @@ ipcMain.on('show-in-folder', (_event, fileUrl) => {
   try {
     shell.showItemInFolder(fileURLToPath(fileUrl));
   } catch {}
+});
+
+ipcMain.handle('show-open-dialog', async (event, options) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return dialog.showOpenDialog(win, options);
 });
 
 ipcMain.on('write-app-state', (_event, data) => {

@@ -14,6 +14,26 @@
   let status = $state(null); // null | 'loading' | 'success' | 'error'
   let errorMsg = $state('');
 
+  let vdjDatabasePath = $state(globals.get('vdjDatabasePath') ?? null);
+
+  $effect(() => {
+    vdjDatabasePath = globals.get('vdjDatabasePath') ?? null;
+  });
+
+  async function handleSelectVdjDatabase() {
+    const result = await window.electronAPI.showOpenDialog({
+      title: 'Select VirtualDJ database file',
+      filters: [{ name: 'XML files', extensions: ['xml'] }],
+      properties: ['openFile'],
+    });
+
+    if (result.canceled || !result.filePaths.length) return;
+
+    vdjDatabasePath = result.filePaths[0];
+    globals.set('vdjDatabasePath', vdjDatabasePath);
+    saveAppState();
+  }
+
   // Font size
   let fontSize = $state(globals.get('fontSize') ?? 16);
 
@@ -123,6 +143,20 @@
       <h2 class="subheading">Library management</h2>
 
       <div class="import-block">
+        <Button onclick={handleSelectVdjDatabase}>Select database.xml</Button>
+
+        {#if window.electronAPI?.platform === 'win32'}
+          <p class="hint">VirtualDJ database can be found in C:\Users\[username]\Documents\VirtualDJ folder</p>
+        {:else}
+          <p class="hint">VirtualDJ database can be found in ~/Library/Application Support/VirtualDJ folder</p>
+        {/if}
+
+        {#if vdjDatabasePath}
+          <p class="path-display">Selected db file: {vdjDatabasePath}</p>
+        {/if}
+      </div>
+
+      <div class="import-block">
         <Button onclick={() => fileInput.click()}>Import iTunes Library</Button>
 
         <p class="hint">
@@ -161,6 +195,8 @@
     overflow-y: auto;
     pointer-events: none;
     transition: opacity var(--td-250);
+
+    width: 100%;
   }
 
   .settings.visible {
@@ -170,7 +206,7 @@
 
   .settings-inner {
     padding: 3em;
-    max-width: 37.5em;
+    width: 100%;
   }
 
   .heading {
@@ -197,6 +233,21 @@
     display: flex;
     flex-direction: column;
     gap: 0.75em;
+
+    margin-bottom: 1.5em;
+  }
+
+  .import-block:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .path-display {
+    margin: 0;
+    font-size: 0.8125em;
+    color: var(--fg2);
+    font-weight: 500;
+    word-break: break-all;
+    line-height: 1.5;
   }
 
   .hint {
@@ -206,7 +257,6 @@
     line-height: 1.6;
     letter-spacing: 0.01em;
     font-weight: 500;
-    max-width: 32em;
   }
 
   .status-msg {
