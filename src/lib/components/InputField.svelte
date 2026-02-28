@@ -9,6 +9,7 @@
     step = undefined,
     width = '100%',
     textalign = 'left',
+    active = false,
     oninput = undefined,
     onchange = undefined,
     onkeydown = undefined,
@@ -28,6 +29,7 @@
 <input
   bind:this={el}
   class="input-field"
+  class:active={active}
   {type}
   {placeholder}
   {min}
@@ -57,6 +59,21 @@
 
   .input-field:focus {
     border-color: var(--border3);
+  }
+
+  .input-field.active {
+    background-color: var(--yellow-warm-80);
+    border-color: var(--black4);
+    color: var(--black4);
+    font-weight: 600;
+  }
+
+  .input-field.active:hover, .input-field.active:focus {
+    background-color: var(--yellow-cool-80);
+  }
+
+  .input-field.active:focus {
+    border-color: transparent;
   }
 
   .input-field::-webkit-outer-spin-button,

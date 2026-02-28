@@ -67,7 +67,12 @@ export async function initAppState() {
 export function saveAppState() {
   const state = {};
   for (const key of PERSISTED_KEYS) {
-    state[key] = $state.snapshot(globals.get(key));
+    let value = $state.snapshot(globals.get(key));
+
+    // Search view is session-only — don't persist it.
+    if (key === 'selectedFolderView' && value?.id === '__search__') value = null;
+
+    state[key] = value;
   }
   window.electronAPI?.writeAppState(state);
 }

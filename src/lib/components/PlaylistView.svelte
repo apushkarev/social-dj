@@ -267,19 +267,24 @@
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
 
   const LIBRARY_ID = '__library__';
+  const SEARCH_ID = '__search__';
 
   let activeNodeId = $derived(selectedFolderView?.id ?? selectedPlaylistId);
 
   let sortColumn = $derived(
     activeNodeId === LIBRARY_ID
       ? (globals.get('librarySortColumn') ?? null)
-      : (getNodeById(library, activeNodeId)?.sortColumn ?? null)
+      : activeNodeId === SEARCH_ID
+        ? (globals.get('searchSortColumn') ?? null)
+        : (getNodeById(library, activeNodeId)?.sortColumn ?? null)
   );
 
   let sortDirection = $derived(
     activeNodeId === LIBRARY_ID
       ? (globals.get('librarySortDirection') ?? 0)
-      : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
+      : activeNodeId === SEARCH_ID
+        ? (globals.get('searchSortDirection') ?? 0)
+        : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
   );
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
@@ -302,10 +307,30 @@
   // Effective view: folder aggregation takes priority over single playlist
   let breadcrumbs = $derived(calcBreadcrumbs());
 
+  function getSearchCountLabel() {
+    if (activeNodeId !== SEARCH_ID) return null;
+    const query = globals.get('searchQuery');
+    if (!query || query.length < 2) return null;
+    const count = globals.get('searchResultIds').length;
+    return count > 0 ? `(${count})` : '(nothing found)';
+  }
+
+  let searchCountLabel = $derived(getSearchCountLabel());
+
   let activeTrackIds = $derived(
-    selectedFolderView?.trackIds
-    ?? (playlist?.type === 'playlist' ? playlist.trackIds : null)
+    activeNodeId === SEARCH_ID
+      ? (globals.get('searchResultIds') ?? [])
+      : selectedFolderView?.trackIds
+        ?? (playlist?.type === 'playlist' ? playlist.trackIds : null)
   );
+
+  // Reset selection when search results change so stale selections don't linger.
+  $effect(() => {
+    globals.get('searchResultIds');
+    if (activeNodeId !== SEARCH_ID) return;
+    selectedTrackIds = new Set();
+    anchorTrackId = null;
+  });
 
   let tracks = $derived(
     activeTrackIds
@@ -565,6 +590,9 @@
       globals.set('librarySortColumn', col);
       globals.set('librarySortDirection', newDir);
       saveAppState();
+    } else if (activeNodeId === SEARCH_ID) {
+      globals.set('searchSortColumn', col);
+      globals.set('searchSortDirection', newDir);
     } else {
       setNodeSort(activeNodeId, col, newDir);
     }
@@ -574,7 +602,7 @@
 
     const row = e.currentTarget;
 
-    if (!selectedPlaylistId) return;
+    if (!selectedPlaylistId && activeNodeId !== SEARCH_ID) return;
     e.preventDefault();
 
     const ids = selectedTrackIds.has(track.trackId)
@@ -585,7 +613,7 @@
 
     const showInFinderLabel = window.electronAPI?.platform === 'darwin' ? 'Show in Finder' : 'Show in Explorer';
 
-    contextMenu.show(e.clientX, e.clientY, [
+    const items = [
       {
         icon: 'folder',
         text: showInFinderLabel,
@@ -593,17 +621,25 @@
           if (track.location) window.electronAPI?.showInFolder(track.location);
         },
       },
-      { type: 'separator' },
-      {
-        icon: 'trash',
-        text: 'Delete from playlist',
-        callback: () => {
+    ];
 
-          removeTracksFromPlaylist(selectedPlaylistId, ids);
-          selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
-          if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+    if (selectedPlaylistId) {
+      items.push(
+        { type: 'separator' },
+        {
+          icon: 'trash',
+          text: 'Delete from playlist',
+          callback: () => {
+
+            removeTracksFromPlaylist(selectedPlaylistId, ids);
+            selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
+            if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+          },
         },
-      },
+      );
+    }
+
+    items.push(
       { type: 'separator' },
       {
         icon: 'trash',
@@ -615,7 +651,9 @@
           if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
         },
       },
-    ], row, 'mouse', 'target');
+    );
+
+    contextMenu.show(e.clientX, e.clientY, items, row, 'mouse', 'target');
   }
 
   function formatTime(ms) {
@@ -644,6 +682,10 @@
           <h1 class="playlist-title delimiter">{delimiter}</h1>
         {/if}
       {/each}
+
+      {#if searchCountLabel}
+        <h1 class="playlist-title search-count">{searchCountLabel}</h1>
+      {/if}
 
     </div>
 
@@ -791,6 +833,11 @@
 
   .playlist-title.delimiter {
     color: var(--yellow-warm-80);
+  }
+
+  .playlist-title.search-count {
+    color: var(--fg1);
+    font-weight: 400;
   }
 
   .track-scroll {

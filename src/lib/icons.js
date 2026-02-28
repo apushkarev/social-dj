@@ -164,13 +164,13 @@ export const icons = {
       <path d="M9 5.27009C9.2472 5.27009 9.44759 5.0697 9.44759 4.8225C9.44759 4.5753 9.2472 4.37491 9 4.37491" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `,
-  
+
   search: `
-    <svg class="iconSVG" width="40" height="40" viewBox="0 0 40 40" fill="none"
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path class="iconPath" d="M18.0062 28.0123C23.5324 28.0123 28.0123 23.5324 28.0123 18.0062C28.0123 12.4799 23.5324 8 18.0062 8C12.4799 8 8 12.4799 8 18.0062C8 23.5324 12.4799 28.0123 18.0062 28.0123Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path class="iconPath" d="M32 32L25.0769 25.0769" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18.0062 28.0123C23.5324 28.0123 28.0123 23.5324 28.0123 18.0062C28.0123 12.4799 23.5324 8 18.0062 8C12.4799 8 8 12.4799 8 18.0062C8 23.5324 12.4799 28.0123 18.0062 28.0123Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M32 32L25.0769 25.0769" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
 };

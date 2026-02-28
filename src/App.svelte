@@ -8,6 +8,7 @@
   import HeaderPlayer from './lib/components/HeaderPlayer.svelte';
   import MainVolume from './lib/components/MainVolume.svelte';
   import { saveAppState } from './lib/app-state.svelte.js';
+  import SearchInput from './lib/components/SearchInput.svelte';
 
   const stored = globals.get('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
@@ -100,7 +101,7 @@
     "
   >
     <div class="search-wrapper">
-
+      <SearchInput />
     </div>
     <div
       bind:this={sliderEl}
@@ -168,13 +169,15 @@
        Setting it directly (not via CSS var) ensures the CSS transition fires. */
     flex-shrink: 0;
     overflow: hidden;
-    
+    display: flex;
+    flex-direction: column;
+
     transition: width var(--td-250) ease-in-out, transform var(--td-250) ease-in-out;
   }
 
-
   .tree-slider {
-    height: 100%;
+    flex: 1;
+    overflow: hidden;
     width: 100%;
   }
 

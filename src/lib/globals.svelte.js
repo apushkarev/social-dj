@@ -4,6 +4,11 @@ let globalStorage = $state({
   library: null,
   selectedPlaylistId: null,
   playingPlaylistId: null,
+
+  searchQuery: '',
+  searchResultIds: [],
+  searchSortColumn: null,
+  searchSortDirection: 0,
   
   // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
   selectedFolderView: null,
