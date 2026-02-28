@@ -169,8 +169,8 @@ export const icons = {
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path d="M18.0062 28.0123C23.5324 28.0123 28.0123 23.5324 28.0123 18.0062C28.0123 12.4799 23.5324 8 18.0062 8C12.4799 8 8 12.4799 8 18.0062C8 23.5324 12.4799 28.0123 18.0062 28.0123Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M32 32L25.0769 25.0769" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M18.0062 28.0123C23.5324 28.0123 28.0123 23.5324 28.0123 18.0062C28.0123 12.4799 23.5324 8 18.0062 8C12.4799 8 8 12.4799 8 18.0062C8 23.5324 12.4799 28.0123 18.0062 28.0123Z" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M32 32L25.0769 25.0769" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `,
 };
