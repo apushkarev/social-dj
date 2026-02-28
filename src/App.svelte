@@ -194,7 +194,7 @@
 
   .search-wrapper {
     width: 100%;
-    height: 56px;
+    height: 36px;
     border-bottom: 1px solid var(--border2);
     border-right: 1px solid var(--border2);
   }

@@ -126,22 +126,10 @@
     display: flex;
     align-items: center;
     gap: 0.5em;
-    height: 2em;
-    padding: 0 0.75em 0 0.25em;
-    background-color: var(--overlay1);
-    border: 1px solid var(--border2);
-    border-radius: var(--brad1);
-    box-sizing: border-box;
-    transition: border-color var(--td-100);
-  }
-
-  .input-group:focus-within {
-    border-color: var(--border3);
+    height: 100%;
   }
 
   .input-group.active {
-    background-color: var(--yellow-warm-80);
-    border-color: var(--black3);
     color: var(--black4);
   }
 
@@ -156,10 +144,6 @@
 
   .input-group.active .search-icon {
     color: var(--black3);
-  }
-
-  .input-group.active:focus-within {
-    border-color: transparent;
   }
 
   .search-icon {
