@@ -12,6 +12,8 @@ const PERSISTED_KEYS = [
   'selectedFolderView',
   'fontSize',
   'userName',
+  'librarySortColumn',
+  'librarySortDirection',
   'volume',
   'vdjDatabasePath',
   'soundOutputs',

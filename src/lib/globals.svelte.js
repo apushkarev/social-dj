@@ -35,6 +35,8 @@ let globalStorage = $state({
   'tree-open-folders': [],
   'userName': '',
   'fontSize': 16,
+  'librarySortColumn': null,
+  'librarySortDirection': 0,
 });
 
 function getGlobals() {

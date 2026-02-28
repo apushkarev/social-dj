@@ -6,6 +6,7 @@
   import { contextMenu } from '../context-menu.svelte.js';
   import { toMediaUrl } from '../helpers.svelte.js';
   import { getSortedTracks, nextSortDirection, TAG_CYCLE } from '../sort.js';
+  import { saveAppState } from '../app-state.svelte.js';
   import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
   import { slide } from 'svelte/transition';
@@ -265,9 +266,21 @@
 
   let playlist = $derived(getNodeById(library, selectedPlaylistId));
 
+  const LIBRARY_ID = '__library__';
+
   let activeNodeId = $derived(selectedFolderView?.id ?? selectedPlaylistId);
-  let sortColumn = $derived(getNodeById(library, activeNodeId)?.sortColumn ?? null);
-  let sortDirection = $derived(getNodeById(library, activeNodeId)?.sortDirection ?? 0);
+
+  let sortColumn = $derived(
+    activeNodeId === LIBRARY_ID
+      ? (globals.get('librarySortColumn') ?? null)
+      : (getNodeById(library, activeNodeId)?.sortColumn ?? null)
+  );
+
+  let sortDirection = $derived(
+    activeNodeId === LIBRARY_ID
+      ? (globals.get('librarySortDirection') ?? 0)
+      : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
+  );
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
 
@@ -546,9 +559,15 @@
 
     let newDir = sortColumn === col ? nextSortDirection(sortDirection) : 1;
 
-    if (col == 'num') newDir = 1;
+    if (col === 'num') newDir = 1;
 
-    setNodeSort(activeNodeId, col, newDir);
+    if (activeNodeId === LIBRARY_ID) {
+      globals.set('librarySortColumn', col);
+      globals.set('librarySortDirection', newDir);
+      saveAppState();
+    } else {
+      setNodeSort(activeNodeId, col, newDir);
+    }
   }
 
   function handleTrackContextMenu(e, track) {
