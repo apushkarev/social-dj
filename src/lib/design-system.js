@@ -72,6 +72,7 @@ export const ds = {
 
   '--yellow-warm-25': 'rgb(228 193 68 / 0.25)',
   '--yellow-warm-80': 'rgb(204 160 0)',
+  '--yellow-cool-80': 'rgb(204 180 0)',
   
   '--red-50': 'rgb(127, 38, 22)',
   '--bristol-orange-50': 'rgb(128, 61, 13)',

@@ -3,7 +3,8 @@ let globalStorage = $state({
   // Runtime — not persisted
   library: null,
   selectedPlaylistId: null,
-
+  playingPlaylistId: null,
+  
   // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
   selectedFolderView: null,
 
@@ -17,7 +18,8 @@ let globalStorage = $state({
 
   currentlyPlayingTrackId: null,
   currentViewTracks: [],
-
+  currentPlayingTracks: [],
+  
   // Persisted — populated from app-state.json on init, saved on every change
   'volume': {
     "header": 0.5

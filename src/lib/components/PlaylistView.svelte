@@ -89,6 +89,10 @@
     const headerAudio = globals.get('audio')?.header;
     if (!headerAudio) return;
 
+    // Snapshot the current view as the active playing queue.
+    globals.set('currentPlayingTracks', sortedTracks);
+    globals.set('playingPlaylistId', activeNodeId);
+
     globals.set('currentlyPlayingTrackId', trackId);
 
     headerAudio.src = toMediaUrl(track.location);

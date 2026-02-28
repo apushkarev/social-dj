@@ -25,6 +25,8 @@
       : globals.get('selectedPlaylistId') === node.id
   );
 
+  let isCurrentPlaying = $derived(globals.get('playingPlaylistId') === node.id);
+
   // Recursively collect unique track IDs from all playlists in a subtree.
   // Uses insertion order for deduplication (Set preserves it).
   function collectFolderTrackIds(n) {
@@ -237,6 +239,7 @@
     class:folder={isFolder}
     class:playlist={!isFolder}
     class:selected={isSelected}
+    class:current-playing={isCurrentPlaying}
     class:drag-over={isDragOver}
     data-snap-row
     draggable="true"
@@ -333,13 +336,22 @@
   }
 
   .node-row.selected, .node-row.folder.selected {
+    background-color: var(--overlay5);
+    color: var(--fg3-s);
+  }
+  
+  .node-row.current-playing, .node-row.folder.current-playing {
     background-color: var(--yellow-warm-80);
     color: var(--black4);
   }
 
   .node-row.selected:hover, .node-row.folder.selected:hover {
-    background-color: var(--yellow-warm-80);
-    color: var(--black6);
+    background-color: var(--overlay6);
+  }
+
+  .node-row.current-playing:hover, .node-row.folder.current-playing:hover {
+    background-color: var(--yellow-cool-80);
+    color: var(--black4);
   }
 
   .node-row.drag-over {
@@ -378,6 +390,10 @@
   }
 
   .selected .icon, .selected .arrow {
+    color: var(--fg3-s);
+  }
+
+  .current-playing .icon, .current-playing .arrow {
     color: var(--black4);
   }
 

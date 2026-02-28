@@ -117,7 +117,7 @@
 
   function handleNext() {
 
-    const tracks = globals.get('currentViewTracks') ?? [];
+    const tracks = globals.get('currentPlayingTracks') ?? [];
     if (!tracks.length) return;
 
     const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
@@ -136,7 +136,7 @@
       return;
     }
 
-    const tracks = globals.get('currentViewTracks') ?? [];
+    const tracks = globals.get('currentPlayingTracks') ?? [];
     if (!tracks.length) return;
 
     const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
@@ -149,7 +149,7 @@
 
   function handleEnded() {
 
-    const tracks = globals.get('currentViewTracks') ?? [];
+    const tracks = globals.get('currentPlayingTracks') ?? [];
     if (!tracks.length) return;
 
     const currentIdx = tracks.findIndex(t => t.trackId === playingTrackId);
