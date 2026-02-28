@@ -333,7 +333,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 4px 0;
+    padding-bottom: 4px;
   }
 
   .loading {

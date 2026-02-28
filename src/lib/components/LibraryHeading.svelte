@@ -96,12 +96,13 @@
     display: flex;
     align-items: center;
     width: 100%;
-    height: 28px;
+
     border: none;
     background: none;
     font-family: inherit;
     cursor: pointer;
-    padding: 0 12px;
+    padding: 0.75em 0.75em;
+    box-sizing: border-box;
     text-align: left;
     white-space: nowrap;
     overflow: hidden;
