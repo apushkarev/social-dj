@@ -53,6 +53,13 @@
 
   let isDragOver = $state(false);
 
+  let isTrackHovered = $derived(
+    !isFolder &&
+    dragStore.isDragging &&
+    dragStore.hoveredPlaylistNodeId === node.id &&
+    dragStore.sourcePlaylistId !== node.id
+  );
+
   // --- Track drop (playlist nodes only) ---
 
   function handleDragOver(e) {
@@ -240,8 +247,10 @@
     class:playlist={!isFolder}
     class:selected={isSelected}
     class:current-playing={isCurrentPlaying}
-    class:drag-over={isDragOver}
+    class:drag-over={isDragOver || isTrackHovered}
     data-snap-row
+    data-node-id={node.id}
+    data-node-type={node.type}
     draggable="true"
     style="padding-left: {12 + depth * 20}px"
     onclick={handleClick}

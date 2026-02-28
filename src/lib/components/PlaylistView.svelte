@@ -418,6 +418,51 @@
 
   let _dragActive = false;
   let _fileDragStarted = false;
+  let _ghostEl = null;
+
+  function createDragGhost() {
+
+    const cs = getComputedStyle(document.documentElement);
+    const bg2     = cs.getPropertyValue('--bg2').trim();
+    const border3 = cs.getPropertyValue('--border3').trim();
+    const fg3     = cs.getPropertyValue('--fg3').trim();
+
+    const el = document.createElement('div');
+    el.style.cssText = [
+      'position:fixed', 'top:0', 'left:0',
+      'pointer-events:none', 'z-index:9999',
+      'display:flex', 'align-items:center',
+      'padding:8px 16px 8px 12px',
+      `background:${bg2}`, `border:1px solid ${border3}`,
+      'border-radius:8px', `color:${fg3}`,
+      'font-family:inherit', 'font-size:13px', 'font-weight:500',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.5)',
+      'white-space:nowrap', 'will-change:transform',
+    ].join(';');
+
+    const count = _dragIds.length;
+    const firstName = count === 1 ? (library?.tracks[String(_dragIds[0])]?.name ?? null) : null;
+    const label = firstName
+      ? (firstName.length > 28 ? firstName.slice(0, 28) + '\u2026' : firstName)
+      : `${count} track${count === 1 ? '' : 's'}`;
+
+    el.textContent = label;
+    document.body.appendChild(el);
+
+    return el;
+  }
+
+  function moveGhost(x, y) {
+    if (!_ghostEl) return;
+    _ghostEl.style.transform = `translate(${x + 14}px, ${y + 14}px)`;
+  }
+
+  function removeGhost() {
+    if (_ghostEl) {
+      _ghostEl.remove();
+      _ghostEl = null;
+    }
+  }
 
   function getDropIndexFromY(clientY) {
 
@@ -511,6 +556,9 @@
 
     startCursorPoll();
 
+    _ghostEl = createDragGhost();
+    moveGhost(e.clientX, e.clientY);
+
     // pointerup fires if the OS forwards the mouseUp to the renderer (not always).
     document.addEventListener('pointerup', handleDragPointerUp, true);
     window.addEventListener('pointerup', handleDragPointerUp);
@@ -534,11 +582,16 @@
       return;
     }
 
-    // Cursor has left the window — start native file drag for external drop.
-    if (!_fileDragStarted) {
-      const outside = e.clientX < 0 || e.clientX > window.innerWidth ||
-                      e.clientY < 0 || e.clientY > window.innerHeight;
-      if (outside) {
+    const outside = e.clientX < 0 || e.clientX > window.innerWidth ||
+                    e.clientY < 0 || e.clientY > window.innerHeight;
+
+    if (outside) {
+
+      dragStore.setHoveredPlaylistNode(null);
+
+      // Cursor has left the window — start native file drag for external drop.
+      if (!_fileDragStarted) {
+        removeGhost();
         liveOrderIds = [..._originalTrackIds];
         _fileDragStarted = true;
         const fileLocations = _dragIds
@@ -546,6 +599,15 @@
           .filter(Boolean);
         if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
       }
+
+    } else {
+
+      moveGhost(e.clientX, e.clientY);
+
+      // Detect playlist node under cursor for tree drop.
+      const els = document.elementsFromPoint(e.clientX, e.clientY);
+      const nodeEl = els.find(el => el.dataset?.nodeType === 'playlist' && el.dataset?.nodeId);
+      dragStore.setHoveredPlaylistNode(nodeEl?.dataset.nodeId ?? null);
     }
   }
 
@@ -564,11 +626,24 @@
     document.removeEventListener('pointermove', handleDragPointerMove, true);
 
     stopCursorPoll();
+    removeGhost();
+
+    // Capture before dragStore.end() clears these.
+    const hoveredNodeId = dragStore.hoveredPlaylistNodeId;
+    const sourceId = dragStore.sourcePlaylistId;
+    const isTreeDrop = !!(hoveredNodeId && hoveredNodeId !== sourceId);
+
+    dragStore.setHoveredPlaylistNode(null);
 
     // liveOrderIds already reflects the final position from real-time polling.
-    // Save it if reordering was active and the order changed.
-    if (reorderActive && isReorderAllowed && liveOrderIds) {
+    // Skip reorder save when dropping onto a different playlist — avoid accidental reorders.
+    if (!isTreeDrop && reorderActive && isReorderAllowed && liveOrderIds) {
       reorderTracksInPlaylist(selectedPlaylistId, liveOrderIds);
+    }
+
+    // Add dragged tracks to the hovered tree node playlist.
+    if (isTreeDrop) {
+      addTracksToPlaylist(hoveredNodeId, _dragIds);
     }
 
     reorderActive = false;
