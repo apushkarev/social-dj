@@ -277,17 +277,31 @@ export function setNodeSort(nodeId, sortColumn, sortDirection) {
   saveHierarchy();
 }
 
-// Adds a new item under parentFolderId, updates globals, persists.
+// Adds a new item under parentFolderId (or at root when null), updates globals, persists.
 // Returns { newId, newHierarchy, newIndex } or null if parent not found.
 export function createTreeItem(parentFolderId, type, name) {
-  const library = globals.get('library');
-  const parentPath = library.index[parentFolderId];
-  if (!parentPath) return null;
-
   const newId = generateId();
   const newItem = type === 'folder'
     ? { id: newId, type: 'folder', name, parentId: parentFolderId, children: [] }
     : { id: newId, type: 'playlist', name, parentId: parentFolderId, trackIds: [] };
+
+  if (parentFolderId === null) {
+    globals.update('library', current => {
+      current.hierarchy.push(newItem);
+      sortRootLevel(current.hierarchy);
+      current.index = rebuildIndex(current.hierarchy);
+      return current;
+    });
+
+    saveHierarchy();
+
+    const lib = globals.get('library');
+    return { newId, newHierarchy: lib.hierarchy, newIndex: lib.index };
+  }
+
+  const library = globals.get('library');
+  const parentPath = library.index[parentFolderId];
+  if (!parentPath) return null;
 
   globals.update('library', current => {
     let parentNode = { children: current.hierarchy };

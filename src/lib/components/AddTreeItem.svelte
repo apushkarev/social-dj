@@ -59,7 +59,7 @@
 
     // — open ancestor folders and direct parent —
     ensureAncestorsOpen(newIndex, newHierarchy, newId);
-    if (!treeState.isOpen(parentFolderId)) treeState.toggle(parentFolderId);
+    if (parentFolderId && !treeState.isOpen(parentFolderId)) treeState.toggle(parentFolderId);
 
     // — select new item —
     if (type === 'folder') {

@@ -33,6 +33,7 @@ let globalStorage = $state({
   'discreteScrolling': false,
   'color-tags': {},
   'tree-open-folders': [],
+  'userName': '',
   'fontSize': 16,
 });
 

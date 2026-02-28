@@ -11,6 +11,7 @@ const PERSISTED_KEYS = [
   'selectedPlaylistId',
   'selectedFolderView',
   'fontSize',
+  'userName',
   'volume',
   'vdjDatabasePath',
   'soundOutputs',

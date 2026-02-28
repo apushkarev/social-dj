@@ -2,6 +2,7 @@
   import { globals } from '../globals.svelte.js';
   import { treeState } from '../tree-state.svelte.js';
   import TreeNode from './TreeNode.svelte';
+  import LibraryHeading from './LibraryHeading.svelte';
   import { saveAppState } from '../app-state.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
   import { moveTreeNodeToRoot, sortRootLevel, rebuildIndex } from '../tree-management.svelte.js';
@@ -305,6 +306,8 @@
     ondragover={handleScrollDragOver}
     ondrop={handleScrollDrop}
   >
+    <LibraryHeading />
+
     {#if hierarchy.length > 0}
       {#each hierarchy as node (node.id)}
         <TreeNode {node} />

@@ -34,6 +34,18 @@
     saveAppState();
   }
 
+  // User name
+  let userName = $state(globals.get('userName') ?? '');
+
+  $effect(() => {
+    userName = globals.get('userName') ?? '';
+  });
+
+  function handleUserNameChange(e) {
+    globals.set('userName', e.target.value);
+    saveAppState();
+  }
+
   // Font size
   let fontSize = $state(globals.get('fontSize') ?? 16);
 
@@ -113,6 +125,19 @@
 
     <section class="section">
       <h2 class="subheading">Appearance</h2>
+
+      <div class="setting-row">
+        <span class="setting-label">Name</span>
+        <InputField
+          type="text"
+          value={userName}
+          placeholder="Your name"
+          width="12em"
+          onchange={handleUserNameChange}
+        />
+      </div>
+
+      <div class="vGap4"></div>
 
       <div class="setting-row">
         <span class="setting-label">Font size</span>
