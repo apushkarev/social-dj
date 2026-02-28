@@ -1,5 +1,17 @@
 import { globals } from './globals.svelte.js';
 
+// Root-level sort: playlists before folders, each group alphabetically.
+function compareRootNodes(a, b) {
+  if (a.type !== b.type) return a.type === 'playlist' ? -1 : 1;
+  return a.name.localeCompare(b.name);
+}
+
+// Sorts the root level of a hierarchy array in-place and returns it.
+export function sortRootLevel(nodes) {
+  nodes.sort(compareRootNodes);
+  return nodes;
+}
+
 export function generateId() {
   return (Date.now().toString(16) + Math.random().toString(16).slice(2, 8)).toUpperCase();
 }
@@ -167,7 +179,7 @@ export function moveTreeNodeToRoot(nodeId) {
     const [movedNode] = sourceParent.children.splice(nodePath[nodePath.length - 1], 1);
     movedNode.parentId = null;
     current.hierarchy.push(movedNode);
-    current.hierarchy.sort((a, b) => a.name.localeCompare(b.name));
+    sortRootLevel(current.hierarchy);
     current.index = rebuildIndex(current.hierarchy);
     return current;
   });

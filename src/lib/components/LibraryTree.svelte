@@ -4,7 +4,7 @@
   import TreeNode from './TreeNode.svelte';
   import { saveAppState } from '../app-state.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
-  import { moveTreeNodeToRoot } from '../tree-management.svelte.js';
+  import { moveTreeNodeToRoot, sortRootLevel, rebuildIndex } from '../tree-management.svelte.js';
 
   let { onwidthchange = undefined } = $props();
 
@@ -155,9 +155,11 @@
     ]);
 
     const { tracks } = await tracksRes.json();
-    const { hierarchy, index } = await hierarchyRes.json();
+    const { hierarchy } = await hierarchyRes.json();
 
-    globals.set('library', { tracks, hierarchy, index });
+    sortRootLevel(hierarchy);
+
+    globals.set('library', { tracks, hierarchy, index: rebuildIndex(hierarchy) });
   }
 
   $effect(() => {
