@@ -4,8 +4,8 @@
   let { selectedItem, onselect } = $props();
 
   const topItems = [
-    { id: 'tree',         icon: 'sibebarTree',   title: 'Library Tree' },
-    { id: 'competitions', icon: 'sidebarTrophy', title: 'Competitions' },
+    { id: 'tree',  icon: 'sibebarTree',   title: 'Library Tree' },
+    { id: 'tags',  icon: 'tag', title: 'Tags' },
   ];
 
   const bottomItems = [
