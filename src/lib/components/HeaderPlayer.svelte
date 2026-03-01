@@ -351,7 +351,10 @@
 
   </div>
 
-  <IconButton icon={icons.loudspeaker} onclick={handleSoundOutputClick} />
+  <div class="player-right-buttons">
+    <IconButton icon={icons.loudspeaker} onclick={handleSoundOutputClick} />
+    <IconButton icon={icons.magic}  />
+  </div>
 
 </div>
 
@@ -522,6 +525,11 @@
     flex-direction: column;
     justify-content: center;
     gap: 0.1em;
+  }
+
+  .player-right-buttons {
+    display: flex;
+    
   }
 
 </style>
