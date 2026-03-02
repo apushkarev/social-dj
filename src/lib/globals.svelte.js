@@ -42,6 +42,13 @@ let globalStorage = $state({
   'fontSize': 16,
   'librarySortColumn': null,
   'librarySortDirection': 0,
+
+  // Tags
+  tagsHierarchy: [],  // persisted
+  tagsIndex: {},      // runtime — rebuilt from tagsHierarchy on init
+  'tag-open-groups': [],  // persisted
+  'tags-scroll-pos': null,  // persisted
+  selectedTagId: null,  // runtime
 });
 
 function getGlobals() {

@@ -9,12 +9,13 @@
   import MainVolume from './lib/components/MainVolume.svelte';
   import { saveAppState } from './lib/app-state.svelte.js';
   import SearchInput from './lib/components/SearchInput.svelte';
+  import TagsTree from './lib/components/TagsTree.svelte';
 
   const stored = globals.get('sidebar-selected-item');
   let selectedItem = $state(stored === null ? 'tree' : (stored === 'none' ? null : stored));
   let prevSelectedItem = $derived(globals.get('prev-sidebar-selected-item'));
 
-  let treeVisible = $derived(selectedItem === 'tree');
+  let treeVisible = $derived(selectedItem === 'tree' || selectedItem === 'tags');
   let prevTreeVisible = $state(true);
 
   let sliderEl = $state();
@@ -100,14 +101,20 @@
       width: {treeWidth}px;      
     "
   >
-    <div class="search-wrapper">
-      <SearchInput />
-    </div>
+    {#if selectedItem === 'tree'}
+      <div class="search-wrapper">
+        <SearchInput />
+      </div>
+    {/if}
     <div
       bind:this={sliderEl}
       class="tree-slider"
     >
-      <LibraryTree onwidthchange={handleTreeWidth} />
+      {#if selectedItem === 'tree'}
+        <LibraryTree onwidthchange={handleTreeWidth} />
+      {:else if selectedItem === 'tags'}
+        <TagsTree onwidthchange={handleTreeWidth} />
+      {/if}
     </div>
   </div>
   <main class="content">

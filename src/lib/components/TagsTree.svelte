@@ -1,0 +1,286 @@
+<script>
+  import { globals } from '../globals.svelte.js';
+  import { tagState } from '../tag-state.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
+  import TagNode from './TagNode.svelte';
+  import TagsHeading from './TagsHeading.svelte';
+
+  let { onwidthchange = undefined } = $props();
+
+  let hierarchy = $derived(globals.get('tagsHierarchy') ?? []);
+
+  // Icon/layout constants matching TagNode.svelte
+  const ARROW_W = 16;
+  const ICON_W  = 18;
+  const GAP     = 6;
+  const PAD_R   = 12;
+  const EXTRA   = 64;
+  const MIN_W   = 200;
+
+  let _measureCtx = null;
+  function getMeasureCtx() {
+    if (!_measureCtx) {
+      _measureCtx = document.createElement('canvas').getContext('2d');
+    }
+    return _measureCtx;
+  }
+
+  function calcNodeWidth(node, depth) {
+
+    const ctx     = getMeasureCtx();
+    const padLeft = 12 + depth * 20;
+    const isGroup = node.type === 'tag-group';
+
+    ctx.font = `${isGroup ? 600 : 400} 14px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+
+    const textW = ctx.measureText(node.name).width;
+    const icons = isGroup
+      ? ARROW_W + GAP + ICON_W + GAP
+      : ICON_W + GAP;
+
+    let maxW = padLeft + icons + textW + PAD_R + (isGroup ? EXTRA : 0);
+
+    if (isGroup && tagState.isOpen(node.id) && node.children?.length) {
+      for (const child of node.children) {
+        maxW = Math.max(maxW, calcNodeWidth(child, depth + 1));
+      }
+    }
+
+    return maxW;
+  }
+
+  $effect(() => {
+
+    if (!hierarchy.length || !onwidthchange) return;
+
+    let maxW = MIN_W;
+
+    for (const node of hierarchy) {
+      maxW = Math.max(maxW, calcNodeWidth(node, 0));
+    }
+
+    onwidthchange(Math.ceil(maxW));
+  });
+
+  let scrollEl = $state(null);
+  let stopTimeout = $state(null);
+
+  // Scroll position persistence
+  let _saveScrollTimer = $state(null);
+  let _scrollRestored = $state(false);
+
+  function handleScroll() {
+
+    clearTimeout(_saveScrollTimer);
+
+    _saveScrollTimer = setTimeout(() => {
+
+      globals.set('tags-scroll-pos', scrollEl.scrollTop);
+      saveAppState();
+    }, 150);
+  }
+
+  $effect(() => {
+
+    if (!scrollEl || !hierarchy.length || _scrollRestored) return;
+
+    _scrollRestored = true;
+
+    const saved = globals.get('tags-scroll-pos');
+
+    if (saved !== null) scrollEl.scrollTop = Number(saved);
+  });
+
+  $effect(() => {
+
+    if (!scrollEl) return;
+
+    scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => scrollEl.removeEventListener('scroll', handleScroll);
+  });
+
+  let isSnapping = false;
+  let accumulatedDelta = 0;
+  let wheelSamples = [];
+
+  const _ds = globals.get('discreteScrolling');
+  let discreteScrolling = $state(_ds === true || _ds === 'true');
+
+  const VELOCITY_WINDOW = 100;
+  const SLOW_THRESHOLD  = 100;
+  const STEP_THRESHOLD  = 20;
+  const SNAP_DELAY      = 75;
+
+  $effect(() => {
+
+    if (!scrollEl || !discreteScrolling) return;
+
+    scrollEl.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => scrollEl.removeEventListener('wheel', handleWheel);
+  });
+
+  function getRowOffsets() {
+
+    const rows = scrollEl.querySelectorAll('[data-snap-row]');
+    const containerRect = scrollEl.getBoundingClientRect();
+    const st = scrollEl.scrollTop;
+
+    return Array.from(rows, row => {
+      return row.getBoundingClientRect().top - containerRect.top + st;
+    });
+  }
+
+  function findNearest(offsets, scrollTop) {
+
+    let best = offsets[0];
+    let bestDist = Math.abs(scrollTop - best);
+
+    for (const pos of offsets) {
+
+      const dist = Math.abs(scrollTop - pos);
+
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = pos;
+      }
+    }
+
+    return best;
+  }
+
+  function findNext(offsets, scrollTop, direction) {
+
+    if (direction > 0) {
+
+      for (const pos of offsets) {
+        if (pos > scrollTop + 2) return pos;
+      }
+
+      return offsets[offsets.length - 1];
+
+    } else {
+
+      for (let i = offsets.length - 1; i >= 0; i--) {
+        if (offsets[i] < scrollTop - 2) return offsets[i];
+      }
+
+      return offsets[0];
+    }
+  }
+
+  function smoothScroll(target) {
+
+    isSnapping = true;
+
+    scrollEl.scrollTo({ top: target, behavior: 'smooth' });
+
+    setTimeout(() => { isSnapping = false; }, 200);
+  }
+
+  function snapToNearest() {
+
+    if (isSnapping) return;
+
+    const offsets = getRowOffsets();
+
+    if (!offsets.length) return;
+
+    const target = findNearest(offsets, scrollEl.scrollTop);
+
+    if (Math.abs(scrollEl.scrollTop - target) < 2) return;
+
+    smoothScroll(target);
+  }
+
+  function stepRow(direction) {
+
+    if (isSnapping) return;
+
+    const offsets = getRowOffsets();
+
+    if (!offsets.length) return;
+
+    smoothScroll(findNext(offsets, scrollEl.scrollTop, direction));
+  }
+
+  function handleWheel(e) {
+
+    e.preventDefault();
+
+    const now = Date.now();
+    wheelSamples.push({ delta: e.deltaY, time: now });
+    wheelSamples = wheelSamples.filter(s => now - s.time < VELOCITY_WINDOW);
+
+    const velocity = wheelSamples.reduce((sum, s) => sum + Math.abs(s.delta), 0);
+    const isSlow = velocity < SLOW_THRESHOLD;
+
+    if (isSlow) {
+
+      accumulatedDelta += e.deltaY;
+
+      if (Math.abs(accumulatedDelta) >= STEP_THRESHOLD) {
+        stepRow(accumulatedDelta > 0 ? 1 : -1);
+        accumulatedDelta = 0;
+      }
+
+    } else {
+
+      scrollEl.scrollTop += e.deltaY;
+      accumulatedDelta = 0;
+    }
+
+    clearTimeout(stopTimeout);
+
+    stopTimeout = setTimeout(() => {
+
+      snapToNearest();
+
+      wheelSamples = [];
+      accumulatedDelta = 0;
+    }, SNAP_DELAY);
+  }
+</script>
+
+<aside class="tags-tree">
+  <div
+    class="tree-scroll"
+    bind:this={scrollEl}
+  >
+    <TagsHeading />
+
+    {#if hierarchy.length > 0}
+      {#each hierarchy as node (node.id)}
+        <TagNode {node} />
+      {/each}
+    {:else}
+      <div class="empty">No tags yet</div>
+    {/if}
+  </div>
+</aside>
+
+<style>
+  .tags-tree {
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border2);
+    background-color: var(--bg1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tree-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 4px;
+  }
+
+  .empty {
+    padding: 16px;
+    color: var(--fg1);
+    font-size: 0.875em;
+  }
+</style>

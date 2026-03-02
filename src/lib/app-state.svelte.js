@@ -15,6 +15,9 @@ const PERSISTED_KEYS = [
   'librarySortColumn',
   'librarySortDirection',
   'volume',
+  'tagsHierarchy',
+  'tag-open-groups',
+  'tags-scroll-pos',
   'vdjDatabasePath',
   'soundOutputs',
 ];
