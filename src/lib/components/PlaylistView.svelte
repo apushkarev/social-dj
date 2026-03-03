@@ -342,17 +342,17 @@
     `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
   );
 
-  let tooltipComment = $state(null);
+  let tooltipTags = $state(null);
   let tooltipTop = $state(0);
 
-  function handleCommentEnter(e, comment) {
-    if (!comment) return;
-    tooltipComment = comment;
+  function handleTagsEnter(e, tags) {
+    if (!tags?.length) return;
+    tooltipTags = tags;
     tooltipTop = e.currentTarget.getBoundingClientRect().top;
   }
 
-  function handleCommentLeave() {
-    tooltipComment = null;
+  function handleTagsLeave() {
+    tooltipTags = null;
   }
 
   // External file drop (from Finder / OS)
@@ -743,6 +743,10 @@
   }
 </script>
 
+{#snippet tagBadge(tag)}
+  <span class="tag-badge">{tag}</span>
+{/snippet}
+
 {#if breadcrumbs && library}
   <div class="playlist-view" style="--num-col-width: {numColWidth}" class:drag-sorted={reorderActive && !isReorderAllowed}>
 
@@ -821,9 +825,8 @@
 
         <div class="hGap3"></div>
 
-        <div class="col col-comments jcfs sortable" onclick={() => handleHeaderClick('comments')}>
-          <span>Comments</span>
-          {#if sortColumn === 'comments'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        <div class="col col-tags jcfs">
+          <span>Tags</span>
         </div>
 
         <div class="col col-date-added jcc sortable" onclick={() => handleHeaderClick('date-added')}>
@@ -866,10 +869,14 @@
           <div class="col col-artist">{track.artist ?? '—'}</div>
           
           <div
-            class="col col-comments"
-            onmouseenter={e => handleCommentEnter(e, track.comments)}
-            onmouseleave={handleCommentLeave}
-          >{track.comments ?? ''}</div>
+            class="col col-tags"
+            onmouseenter={e => handleTagsEnter(e, track.tags)}
+            onmouseleave={handleTagsLeave}
+          >
+            {#each track.tags ?? [] as tag}
+              {@render tagBadge(tag)}
+            {/each}
+          </div>
           
           <div class="col col-date-added jcc">{new Date(track.dateAdded).toLocaleDateString('ru-RU') ?? ''}</div>
         </div>
@@ -879,9 +886,11 @@
 
   </div>
 
-  {#if tooltipComment}
-    <div class="comment-tooltip" style="top: {tooltipTop}px;">
-      {tooltipComment}
+  {#if tooltipTags?.length}
+    <div class="tags-tooltip" style="top: {tooltipTop}px;">
+      {#each tooltipTags as tag}
+        {@render tagBadge(tag)}
+      {/each}
     </div>
   {/if}
 
@@ -1052,7 +1061,7 @@
   .data-row.playing .col-num,
   .data-row.playing .col-bpm,
   .data-row.playing .col-time,
-  .data-row.playing .col-comments,
+  .data-row.playing .col-tags,
   .data-row.playing .col-title,
   .data-row.playing .col-artist,
   .data-row.playing .col-date-added {
@@ -1130,9 +1139,29 @@
     width: 16rem;
   }
 
-  .col-comments {
+  .col-tags {
     width: 25rem;
-    color: var(--fg1);
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+  }
+
+  .tag-badge {
+    flex-shrink: 0;
+    padding: 0.25em 0.5em;
+    border: 1px solid var(--border2);
+    border-radius: var(--brad1);
+    font-size: 0.8125em;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--fg2);
+    background-color: var(--overlay2);
+    white-space: nowrap;
+  }
+
+  .data-row.playing .tag-badge {
+    color: var(--black4);
+    border-color: var(--black2);
   }
 
   .playlist-view.drag-sorted {
@@ -1146,7 +1175,7 @@
     box-shadow: inset 0 0 0 2px var(--meadow-green);
   }
 
-  .comment-tooltip {
+  .tags-tooltip {
     position: fixed;
     right: 1em;
     top: 0;
@@ -1158,12 +1187,11 @@
     border: 1px solid var(--border3);
     border-radius: var(--brad2);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-    font-size: 0.875em;
-    color: var(--fg3);
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
     pointer-events: none;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
   }
 
 </style>
