@@ -62,6 +62,9 @@ export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags) {
 
       case 'time':
         return sortDirection * ((a.totalTime ?? 0) - (b.totalTime ?? 0));
+      
+      case 'date-added':
+        return sortDirection * ((new Date(a.dateAdded).getTime() ?? 0) - (new Date(b.dateAdded).getTime() ?? 0));
 
       case 'artist':
         return sortDirection * (a.artist ?? '').localeCompare(b.artist ?? '');

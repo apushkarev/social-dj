@@ -825,6 +825,12 @@
           <span>Comments</span>
           {#if sortColumn === 'comments'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
+
+        <div class="col col-date-added jcc sortable" onclick={() => handleHeaderClick('date-added')}>
+          <span>Date added</span>
+          {#if sortColumn === 'date-added'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
+        </div>
+        
       </div>
 
       {#each displayTracks as track, i (track.trackId)}
@@ -858,12 +864,14 @@
           <div class="col col-title">{track.name ?? '—'}</div>
           <div class="col col-time">{formatTime(track.totalTime)}</div>
           <div class="col col-artist">{track.artist ?? '—'}</div>
-
+          
           <div
             class="col col-comments"
             onmouseenter={e => handleCommentEnter(e, track.comments)}
             onmouseleave={handleCommentLeave}
           >{track.comments ?? ''}</div>
+          
+          <div class="col col-date-added jcc">{new Date(track.dateAdded).toLocaleDateString('ru-RU') ?? ''}</div>
         </div>
       {/each}
 
@@ -1046,7 +1054,8 @@
   .data-row.playing .col-time,
   .data-row.playing .col-comments,
   .data-row.playing .col-title,
-  .data-row.playing .col-artist {
+  .data-row.playing .col-artist,
+  .data-row.playing .col-date-added {
     color: var(--black4);
     font-weight: 500;
   }
@@ -1097,6 +1106,14 @@
 
   .header-row .col-title {
     width: 21.6em;
+  }
+
+  .col-date-added {
+    width: 8rem;
+  }
+
+  .header-row .col-date-added {
+    width: 8rem;
   }
 
   .col-time {
