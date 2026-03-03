@@ -166,6 +166,11 @@
     function handleKeyDown(e) {
 
       if (!(e.metaKey || e.ctrlKey) || e.key !== 'a') return;
+
+      // Let the browser handle select-all when an input/textarea is focused
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+
       if (!tracks.length) return;
 
       e.preventDefault();
