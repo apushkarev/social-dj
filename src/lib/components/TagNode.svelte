@@ -5,6 +5,7 @@
   import { globals } from '../globals.svelte.js';
   import { contextMenu } from '../context-menu.svelte.js';
   import { deleteTagItem } from '../tag-management.svelte.js';
+  import { saveAppState } from '../app-state.svelte.js';
   import AddTagItem from './AddTagItem.svelte';
   import RenameTagItem from './RenameTagItem.svelte';
   import TagNode from './TagNode.svelte';
@@ -29,11 +30,22 @@
 
   function handleClick() {
 
+    globals.set('selectedTagId', node.id);
+
     if (isGroup) {
       tagState.toggle(node.id);
+      return;
     }
 
-    globals.set('selectedTagId', node.id);
+    // Tag click: open playlist view showing all tracks with this tag
+    globals.set('selectedPlaylistId', null);
+    globals.set('selectedFolderView', {
+      id: node.id,
+      name: node.name,
+      trackIds: node.tracks ?? [],
+    });
+
+    saveAppState();
   }
 
   function handleAddTag(e) {

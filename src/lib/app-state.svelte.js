@@ -1,4 +1,5 @@
 import { globals } from './globals.svelte.js';
+import { sortRootLevel, rebuildIndex } from './tree-management.svelte.js';
 
 const PERSISTED_KEYS = [
   'sidebar-selected-item',
@@ -89,4 +90,23 @@ export function saveAppState() {
   window.electronAPI?.writeAppState(state);
 }
 
-window.saveAppState = saveAppState
+window.saveAppState = saveAppState;
+
+// Loads tracks + hierarchy from JSON files and populates globals.library.
+// Called once at startup from App.svelte so it runs regardless of which
+// sidebar tab is initially selected.
+export async function loadLibrary() {
+  try {
+    const [tracksRes, hierarchyRes] = await Promise.all([
+      fetch('/library/tracks.json'),
+      fetch('/library/hierarchy.json'),
+    ]);
+
+    const { tracks } = await tracksRes.json();
+    const { hierarchy } = await hierarchyRes.json();
+
+    sortRootLevel(hierarchy);
+
+    globals.set('library', { tracks, hierarchy, index: rebuildIndex(hierarchy) });
+  } catch {}
+}

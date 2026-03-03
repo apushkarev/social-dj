@@ -9,6 +9,9 @@ let globalStorage = $state({
   searchResultIds: [],
   searchSortColumn: null,
   searchSortDirection: 0,
+
+  tagViewSortColumn: null,
+  tagViewSortDirection: 0,
   
   // { name: string, trackIds: string[] } when a folder is alt-clicked, null otherwise
   selectedFolderView: null,

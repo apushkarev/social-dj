@@ -249,10 +249,29 @@
     let names = [];
 
     if (selectedFolderView) {
-      
+
       names = getBreadcrumbPath(library, selectedFolderView.id);
 
       if (names) return names.slice(-branchSteps);
+
+      // Tag view: walk tagsHierarchy to build full path, show all levels (depth is small).
+      const tagsHierarchy = globals.get('tagsHierarchy') ?? [];
+      const tagsIndex = globals.get('tagsIndex') ?? {};
+      const tagPath = tagsIndex[selectedFolderView.id];
+
+      if (tagPath && tagsHierarchy.length) {
+
+        const tagNames = [];
+        let node = { children: tagsHierarchy };
+
+        for (const i of tagPath) {
+          node = node.children?.[i];
+          if (!node) break;
+          tagNames.push(node.name);
+        }
+
+        if (tagNames.length) return tagNames;
+      }
 
       return [selectedFolderView.name];
     }
@@ -276,12 +295,20 @@
 
   let activeNodeId = $derived(selectedFolderView?.id ?? selectedPlaylistId);
 
+  // True when viewing tracks for a tag — selectedFolderView is set but its ID
+  // isn't a node in the library hierarchy (tag IDs never appear there).
+  let isTagView = $derived(
+    !!selectedFolderView && !getNodeById(library, selectedFolderView.id)
+  );
+
   let sortColumn = $derived(
     activeNodeId === LIBRARY_ID
       ? (globals.get('librarySortColumn') ?? null)
       : activeNodeId === SEARCH_ID
         ? (globals.get('searchSortColumn') ?? null)
-        : (getNodeById(library, activeNodeId)?.sortColumn ?? null)
+        : isTagView
+          ? (globals.get('tagViewSortColumn') ?? null)
+          : (getNodeById(library, activeNodeId)?.sortColumn ?? null)
   );
 
   let sortDirection = $derived(
@@ -289,7 +316,9 @@
       ? (globals.get('librarySortDirection') ?? 0)
       : activeNodeId === SEARCH_ID
         ? (globals.get('searchSortDirection') ?? 0)
-        : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
+        : isTagView
+          ? (globals.get('tagViewSortDirection') ?? 0)
+          : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
   );
 
   let tagsSortOrder = $derived(globals.get('tagsSortOrder') ?? {});
@@ -675,6 +704,9 @@
     } else if (activeNodeId === SEARCH_ID) {
       globals.set('searchSortColumn', col);
       globals.set('searchSortDirection', newDir);
+    } else if (isTagView) {
+      globals.set('tagViewSortColumn', col);
+      globals.set('tagViewSortDirection', newDir);
     } else {
       setNodeSort(activeNodeId, col, newDir);
     }

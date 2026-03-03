@@ -7,7 +7,7 @@
   import ContextMenu from './lib/components/ContextMenu.svelte';
   import HeaderPlayer from './lib/components/HeaderPlayer.svelte';
   import MainVolume from './lib/components/MainVolume.svelte';
-  import { saveAppState } from './lib/app-state.svelte.js';
+  import { saveAppState, loadLibrary } from './lib/app-state.svelte.js';
   import SearchInput from './lib/components/SearchInput.svelte';
   import TagsTree from './lib/components/TagsTree.svelte';
 
@@ -23,6 +23,11 @@
   $effect(() => {
     globals.set('sidebar-selected-item', selectedItem ?? 'none');
     saveAppState();
+  });
+
+  // Load library once on mount regardless of which sidebar tab is active.
+  $effect(() => {
+    loadLibrary();
   });
 
   // Keep --font-size in sync with globals reactively

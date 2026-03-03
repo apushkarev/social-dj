@@ -5,7 +5,7 @@
   import LibraryHeading from './LibraryHeading.svelte';
   import { saveAppState } from '../app-state.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
-  import { moveTreeNodeToRoot, sortRootLevel, rebuildIndex } from '../tree-management.svelte.js';
+  import { moveTreeNodeToRoot } from '../tree-management.svelte.js';
 
   let { onwidthchange = undefined } = $props();
 
@@ -147,25 +147,6 @@
   const SLOW_THRESHOLD = 100;
   const STEP_THRESHOLD = 20;
   const SNAP_DELAY = 75;
-
-  async function loadLibrary() {
-
-    const [tracksRes, hierarchyRes] = await Promise.all([
-      fetch('/library/tracks.json'),
-      fetch('/library/hierarchy.json'),
-    ]);
-
-    const { tracks } = await tracksRes.json();
-    const { hierarchy } = await hierarchyRes.json();
-
-    sortRootLevel(hierarchy);
-
-    globals.set('library', { tracks, hierarchy, index: rebuildIndex(hierarchy) });
-  }
-
-  $effect(() => {
-    loadLibrary();
-  });
 
   $effect(() => {
 
