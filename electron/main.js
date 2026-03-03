@@ -162,6 +162,17 @@ function findVdjSong(xmlContent, filePath) {
   };
 }
 
+// Sorts a tags array by tagsSortOrder (ascending — lower number = first).
+// Tags not listed in sortOrder sort after known ones, then alphabetically.
+function sortTagsByOrder(tags, sortOrder) {
+  return [...tags].sort((a, b) => {
+    const oa = sortOrder[a] ?? Infinity;
+    const ob = sortOrder[b] ?? Infinity;
+    if (oa !== ob) return oa - ob;
+    return a.localeCompare(b);
+  });
+}
+
 // Adds a track ID to the tracks array of matching tag nodes in tags-hierarchy.json.
 function addTrackToTagNodes(libraryDir, trackId, tagNames) {
   if (!tagNames.length) return;
@@ -234,10 +245,18 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
       } catch {}
     }
 
-    // Populate tags from comments field (comma-separated tag names)
-    const tags = comments
+    // Populate tags from comments field (comma-separated tag names),
+    // sorted by tagsSortOrder from tags-hierarchy.json.
+    let tagsSortOrder = {};
+    try {
+      const tagsData = JSON.parse(readFileSync(resolve(libraryDir, 'tags-hierarchy.json'), 'utf-8'));
+      tagsSortOrder = tagsData?.tagsSortOrder ?? {};
+    } catch {}
+
+    const rawTags = comments
       ? comments.split(',').map(t => t.trim()).filter(Boolean)
       : [];
+    const tags = sortTagsByOrder(rawTags, tagsSortOrder);
 
     const track = {
       trackId:     newId,
