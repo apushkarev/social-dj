@@ -44,7 +44,8 @@ let globalStorage = $state({
   'librarySortDirection': 0,
 
   // Tags
-  tagsHierarchy: [],  // persisted
+  tagsHierarchy: [],  // persisted (in tags-hierarchy.json)
+  tagsSortOrder: {},  // runtime — loaded from tags-hierarchy.json
   tagsIndex: {},      // runtime — rebuilt from tagsHierarchy on init
   'tag-open-groups': [],  // persisted
   'tags-scroll-pos': null,  // persisted

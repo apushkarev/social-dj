@@ -287,7 +287,9 @@
         : (getNodeById(library, activeNodeId)?.sortDirection ?? 0)
   );
 
-  let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags));
+  let tagsSortOrder = $derived(globals.get('tagsSortOrder') ?? {});
+
+  let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags, tagsSortOrder));
 
   // During reorder drag shows live-reordered list; otherwise shows normal sorted list.
   let displayTracks = $derived(
@@ -825,8 +827,9 @@
 
         <div class="hGap3"></div>
 
-        <div class="col col-tags jcfs">
+        <div class="col col-tags jcfs sortable" onclick={() => handleHeaderClick('tags')}>
           <span>Tags</span>
+          {#if sortColumn === 'tags'}<span class="sort-arrow" class:desc={sortDirection === -1}>{@html icons.arrowDown}</span>{/if}
         </div>
 
         <div class="col col-date-added jcc sortable" onclick={() => handleHeaderClick('date-added')}>

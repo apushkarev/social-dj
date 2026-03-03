@@ -67,9 +67,8 @@ export async function initAppState() {
     const tagsRes = await fetch('/library/tags-hierarchy.json');
     if (tagsRes.ok) {
       const tagsData = await tagsRes.json();
-      if (Array.isArray(tagsData?.tagsHierarchy)) {
-        globals.set('tagsHierarchy', tagsData.tagsHierarchy);
-      }
+      if (Array.isArray(tagsData?.tagsHierarchy)) globals.set('tagsHierarchy', tagsData.tagsHierarchy);
+      if (tagsData?.tagsSortOrder) globals.set('tagsSortOrder', tagsData.tagsSortOrder);
     }
   } catch {}
 

@@ -36,7 +36,8 @@ function _syncIndex() {
 // the annotated hierarchy, which we store back into globals.
 async function saveTagsHierarchy() {
   const hierarchy = $state.snapshot(globals.get('tagsHierarchy') ?? []);
-  const result = await window.electronAPI?.saveTagsHierarchy(hierarchy);
+  const tagsSortOrder = $state.snapshot(globals.get('tagsSortOrder') ?? {});
+  const result = await window.electronAPI?.saveTagsHierarchy({ hierarchy, tagsSortOrder });
 
   if (result?.success && Array.isArray(result.tagsHierarchy)) {
     globals.set('tagsHierarchy', result.tagsHierarchy);

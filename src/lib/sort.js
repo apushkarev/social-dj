@@ -28,7 +28,7 @@ function tagRank(color) {
 // colorTags is the Map<string, string> of trackId → color.
 // Original insertion indices are preserved for the 'num' column.
 // For tag sort: null always appears last regardless of direction.
-export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags) {
+export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags, tagsSortOrder = {}) {
 
   if (!sortColumn || sortDirection === 0) return tracks;
 
@@ -69,8 +69,26 @@ export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags) {
       case 'artist':
         return sortDirection * (a.artist ?? '').localeCompare(b.artist ?? '');
 
-      case 'comments':
-        return sortDirection * (a.comments ?? '').localeCompare(b.comments ?? '');
+      case 'tags': {
+        const ta = a.tags ?? [];
+        const tb = b.tags ?? [];
+
+        // Tracks with no tags always go last regardless of direction
+        if (!ta.length && !tb.length) return 0;
+        if (!ta.length) return 1;
+        if (!tb.length) return -1;
+
+        // Lexicographic comparison by sort order number
+        const len = Math.min(ta.length, tb.length);
+        for (let i = 0; i < len; i++) {
+          const oa = tagsSortOrder[ta[i]] ?? Infinity;
+          const ob = tagsSortOrder[tb[i]] ?? Infinity;
+          if (oa !== ob) return sortDirection * (oa - ob);
+        }
+
+        // All compared elements equal — shorter array comes first
+        return sortDirection * (ta.length - tb.length);
+      }
 
       default:
         return 0;

@@ -197,7 +197,7 @@ function addTrackToTagNodes(libraryDir, trackId, tagNames) {
     }
 
     walk(hierarchy);
-    writeFileSync(tagsPath, JSON.stringify({ tagsHierarchy: hierarchy }, null, 2));
+    writeFileSync(tagsPath, JSON.stringify({ ...data, tagsHierarchy: hierarchy }, null, 2));
   } catch {}
 }
 
@@ -312,7 +312,7 @@ ipcMain.handle('save-hierarchy', (_event, data) => {
   }
 });
 
-ipcMain.handle('save-tags-hierarchy', (_event, hierarchy) => {
+ipcMain.handle('save-tags-hierarchy', (_event, { hierarchy, tagsSortOrder = {} }) => {
   try {
     const libraryDir = resolve(__dirname, '..', 'public', 'library');
     const tracksPath = resolve(libraryDir, 'tracks.json');
@@ -347,7 +347,7 @@ ipcMain.handle('save-tags-hierarchy', (_event, hierarchy) => {
     mkdirSync(libraryDir, { recursive: true });
     writeFileSync(
       resolve(libraryDir, 'tags-hierarchy.json'),
-      JSON.stringify({ tagsHierarchy: annotated }, null, 2)
+      JSON.stringify({ tagsSortOrder, tagsHierarchy: annotated }, null, 2)
     );
 
     return { success: true, tagsHierarchy: annotated };
