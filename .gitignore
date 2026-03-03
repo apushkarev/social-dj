@@ -14,3 +14,4 @@ library.json
 library copy.json
 public/library/tracks.json
 public/library/hierarchy.json
+public/library/tags-hierarchy.json
