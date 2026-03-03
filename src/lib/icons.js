@@ -60,31 +60,17 @@ export const icons = {
 
   addFolder: `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_2341_7)">
-        <path d="M8 6.40785V11.715" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M5.34642 9.06143H10.6536" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M1.10071 13.5724V2.42744C1.10071 2.14593 1.21254 1.87595 1.41159 1.67689C1.61065 1.47783 1.88062 1.36601 2.16214 1.36601H6.07881C6.32127 1.35894 6.55885 1.43514 6.75198 1.58191C6.94509 1.72869 7.08212 1.93719 7.14024 2.1727L7.46928 3.48887H13.8379C14.1193 3.48887 14.3894 3.60069 14.5884 3.79975C14.7874 3.99881 14.8993 4.26878 14.8993 4.5503V13.5724C14.8993 13.854 14.7874 14.1239 14.5884 14.3229C14.3894 14.5221 14.1193 14.6338 13.8379 14.6338H2.16214C1.88062 14.6338 1.61065 14.5221 1.41159 14.3229C1.21254 14.1239 1.10071 13.854 1.10071 13.5724Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </g>
-      <defs>
-        <clipPath id="clip0_2341_7">
-          <rect width="16" height="16" fill="white" />
-        </clipPath>
-      </defs>
+      <path d="M8 6.40785V11.715" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M5.34642 9.06143H10.6536" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M1.10071 13.5724V2.42744C1.10071 2.14593 1.21254 1.87595 1.41159 1.67689C1.61065 1.47783 1.88062 1.36601 2.16214 1.36601H6.07881C6.32127 1.35894 6.55885 1.43514 6.75198 1.58191C6.94509 1.72869 7.08212 1.93719 7.14024 2.1727L7.46928 3.48887H13.8379C14.1193 3.48887 14.3894 3.60069 14.5884 3.79975C14.7874 3.99881 14.8993 4.26878 14.8993 4.5503V13.5724C14.8993 13.854 14.7874 14.1239 14.5884 14.3229C14.3894 14.5221 14.1193 14.6338 13.8379 14.6338H2.16214C1.88062 14.6338 1.61065 14.5221 1.41159 14.3229C1.21254 14.1239 1.10071 13.854 1.10071 13.5724Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `,
 
   addPlaylist: `
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_2341_2)">
-        <path d="M3.22357 5.87714V2.16214C3.22357 1.88062 3.3354 1.61065 3.53445 1.41159C3.73351 1.21254 4.00349 1.10071 4.285 1.10071H11.1843L14.8993 4.81571V13.8379C14.8993 14.1193 14.7874 14.3894 14.5884 14.5884C14.3894 14.7874 14.1193 14.8993 13.8379 14.8993H8.53071" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M4.28499 8.5307V14.8993" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M1.10071 11.715H7.46928" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-      </g>
-      <defs>
-        <clipPath id="clip0_2341_2">
-          <rect width="16" height="16" fill="currentColor" />
-        </clipPath>
-      </defs>
+      <path d="M3.22357 5.87714V2.16214C3.22357 1.88062 3.3354 1.61065 3.53445 1.41159C3.73351 1.21254 4.00349 1.10071 4.285 1.10071H11.1843L14.8993 4.81571V13.8379C14.8993 14.1193 14.7874 14.3894 14.5884 14.5884C14.3894 14.7874 14.1193 14.8993 13.8379 14.8993H8.53071" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M4.28499 8.5307V14.8993" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M1.10071 11.715H7.46928" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `,
   edit: `
@@ -166,9 +152,7 @@ export const icons = {
   `,
 
   search: `
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M18.0062 28.0123C23.5324 28.0123 28.0123 23.5324 28.0123 18.0062C28.0123 12.4799 23.5324 8 18.0062 8C12.4799 8 8 12.4799 8 18.0062C8 23.5324 12.4799 28.0123 18.0062 28.0123Z" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M32 32L25.0769 25.0769" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
@@ -176,15 +160,8 @@ export const icons = {
 
   magic: `
     <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_2386_1052)">
-        <path d="M30.151 10.85L28.892 14.289L31.013 16.411C31.124 16.5138 31.2005 16.6484 31.2322 16.7963C31.2639 16.9443 31.2491 17.0984 31.1899 17.2376C31.1308 17.3769 31.0301 17.4944 30.9016 17.5743C30.7731 17.6542 30.6231 17.6925 30.472 17.684L26.819 17.655L25.5 21.018C25.4373 21.17 25.3284 21.2985 25.1888 21.3854C25.0491 21.4722 24.8857 21.513 24.7216 21.5019C24.5575 21.4909 24.401 21.4286 24.2742 21.3238C24.1474 21.219 24.0568 21.0771 24.015 20.918L22.932 17.07L19.08 15.991C18.921 15.9489 18.7792 15.8581 18.6746 15.7312C18.57 15.6044 18.5077 15.4479 18.4967 15.2839C18.4857 15.1198 18.5264 14.9564 18.6131 14.8167C18.6998 14.6769 18.8281 14.5679 18.98 14.505L22.343 13.182L22.314 9.52897C22.3042 9.37728 22.3417 9.22628 22.4213 9.09682C22.501 8.96735 22.6188 8.86581 22.7587 8.80621C22.8985 8.74661 23.0534 8.73189 23.202 8.76409C23.3505 8.79629 23.4854 8.87382 23.588 8.98597L25.71 11.107L29.151 9.84997C29.29 9.80717 29.438 9.80307 29.5792 9.83811C29.7204 9.87316 29.8493 9.94602 29.9521 10.0489C30.055 10.1517 30.1278 10.2806 30.1629 10.4218C30.1979 10.5629 30.1938 10.711 30.151 10.85Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        <path d="M22.932 17.0699L8.75 31.2499" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-      </g>
-      <defs>
-        <clipPath id="clip0_2386_1052">
-          <rect width="24" height="24" fill="white" transform="translate(8 8)" />
-        </clipPath>
-      </defs>
+      <path d="M30.151 10.85L28.892 14.289L31.013 16.411C31.124 16.5138 31.2005 16.6484 31.2322 16.7963C31.2639 16.9443 31.2491 17.0984 31.1899 17.2376C31.1308 17.3769 31.0301 17.4944 30.9016 17.5743C30.7731 17.6542 30.6231 17.6925 30.472 17.684L26.819 17.655L25.5 21.018C25.4373 21.17 25.3284 21.2985 25.1888 21.3854C25.0491 21.4722 24.8857 21.513 24.7216 21.5019C24.5575 21.4909 24.401 21.4286 24.2742 21.3238C24.1474 21.219 24.0568 21.0771 24.015 20.918L22.932 17.07L19.08 15.991C18.921 15.9489 18.7792 15.8581 18.6746 15.7312C18.57 15.6044 18.5077 15.4479 18.4967 15.2839C18.4857 15.1198 18.5264 14.9564 18.6131 14.8167C18.6998 14.6769 18.8281 14.5679 18.98 14.505L22.343 13.182L22.314 9.52897C22.3042 9.37728 22.3417 9.22628 22.4213 9.09682C22.501 8.96735 22.6188 8.86581 22.7587 8.80621C22.8985 8.74661 23.0534 8.73189 23.202 8.76409C23.3505 8.79629 23.4854 8.87382 23.588 8.98597L25.71 11.107L29.151 9.84997C29.29 9.80717 29.438 9.80307 29.5792 9.83811C29.7204 9.87316 29.8493 9.94602 29.9521 10.0489C30.055 10.1517 30.1278 10.2806 30.1629 10.4218C30.1979 10.5629 30.1938 10.711 30.151 10.85Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M22.932 17.0699L8.75 31.2499" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `,
 
