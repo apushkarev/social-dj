@@ -162,6 +162,34 @@ function findVdjSong(xmlContent, filePath) {
   };
 }
 
+// Adds a track ID to the tracks array of matching tag nodes in tags-hierarchy.json.
+function addTrackToTagNodes(libraryDir, trackId, tagNames) {
+  if (!tagNames.length) return;
+
+  const tagsPath = resolve(libraryDir, 'tags-hierarchy.json');
+
+  try {
+    const data = JSON.parse(readFileSync(tagsPath, 'utf-8'));
+    const hierarchy = data?.tagsHierarchy;
+    if (!Array.isArray(hierarchy)) return;
+
+    const tagSet = new Set(tagNames);
+
+    function walk(nodes) {
+      for (const node of nodes) {
+        if (node.type === 'tag' && tagSet.has(node.name)) {
+          if (!Array.isArray(node.tracks)) node.tracks = [];
+          if (!node.tracks.includes(trackId)) node.tracks.push(trackId);
+        }
+        if (node.children) walk(node.children);
+      }
+    }
+
+    walk(hierarchy);
+    writeFileSync(tagsPath, JSON.stringify({ tagsHierarchy: hierarchy }, null, 2));
+  } catch {}
+}
+
 ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
   try {
     const libraryDir = resolve(__dirname, '..', 'public', 'library');
@@ -206,6 +234,11 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
       } catch {}
     }
 
+    // Populate tags from comments field (comma-separated tag names)
+    const tags = comments
+      ? comments.split(',').map(t => t.trim()).filter(Boolean)
+      : [];
+
     const track = {
       trackId:     newId,
       name,
@@ -214,7 +247,7 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
       bpm,
       structure:   [],
       beatgrid:    0,
-      tags:        [],
+      tags,
       dateModified,
       dateAdded,
       comments,
@@ -225,6 +258,9 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
 
     tracks[String(newId)] = track;
     writeFileSync(tracksPath, JSON.stringify({ tracks }, null, 2));
+
+    // Update tags-hierarchy.json with the new track's ID
+    addTrackToTagNodes(libraryDir, String(newId), tags);
 
     return { success: true, track };
   } catch (err) {
@@ -252,6 +288,50 @@ ipcMain.handle('save-hierarchy', (_event, data) => {
     mkdirSync(libraryDir, { recursive: true });
     writeFileSync(resolve(libraryDir, 'hierarchy.json'), JSON.stringify(data, null, 2));
     return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('save-tags-hierarchy', (_event, hierarchy) => {
+  try {
+    const libraryDir = resolve(__dirname, '..', 'public', 'library');
+    const tracksPath = resolve(libraryDir, 'tracks.json');
+
+    // Build tagName → [trackId, ...] map from tracks.json
+    const tagTracksMap = {};
+    try {
+      const { tracks } = JSON.parse(readFileSync(tracksPath, 'utf-8'));
+      for (const [trackId, track] of Object.entries(tracks)) {
+        if (Array.isArray(track.tags)) {
+          for (const tagName of track.tags) {
+            if (!tagTracksMap[tagName]) tagTracksMap[tagName] = [];
+            tagTracksMap[tagName].push(trackId);
+          }
+        }
+      }
+    } catch {}
+
+    // Annotate each tag node with its tracks array
+    function walkAndAnnotate(nodes) {
+      for (const node of nodes) {
+        if (node.type === 'tag') {
+          node.tracks = tagTracksMap[node.name] ?? [];
+        }
+        if (node.children) walkAndAnnotate(node.children);
+      }
+    }
+
+    const annotated = JSON.parse(JSON.stringify(hierarchy));
+    walkAndAnnotate(annotated);
+
+    mkdirSync(libraryDir, { recursive: true });
+    writeFileSync(
+      resolve(libraryDir, 'tags-hierarchy.json'),
+      JSON.stringify({ tagsHierarchy: annotated }, null, 2)
+    );
+
+    return { success: true, tagsHierarchy: annotated };
   } catch (err) {
     return { success: false, error: err.message };
   }

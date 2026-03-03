@@ -1,5 +1,4 @@
 import { globals } from './globals.svelte.js';
-import { saveAppState } from './app-state.svelte.js';
 
 export function generateTagId() {
   return 'T' + (Date.now().toString(16) + Math.random().toString(16).slice(2, 8)).toUpperCase();
@@ -30,6 +29,19 @@ export function initTagIndex() {
 function _syncIndex() {
   const hierarchy = globals.get('tagsHierarchy') ?? [];
   globals.set('tagsIndex', rebuildTagIndex(hierarchy));
+}
+
+// Saves the current tagsHierarchy to tags-hierarchy.json.
+// The main process annotates each tag node with trackCount and returns
+// the annotated hierarchy, which we store back into globals.
+async function saveTagsHierarchy() {
+  const hierarchy = $state.snapshot(globals.get('tagsHierarchy') ?? []);
+  const result = await window.electronAPI?.saveTagsHierarchy(hierarchy);
+
+  if (result?.success && Array.isArray(result.tagsHierarchy)) {
+    globals.set('tagsHierarchy', result.tagsHierarchy);
+    globals.set('tagsIndex', rebuildTagIndex(result.tagsHierarchy));
+  }
 }
 
 // Creates a tag or tag-group. parentGroupId=null → root level.
@@ -64,7 +76,7 @@ export function createTagItem(parentGroupId, type, name) {
   }
 
   _syncIndex();
-  saveAppState();
+  saveTagsHierarchy();
 
   const newHierarchy = globals.get('tagsHierarchy');
   const newIndex = globals.get('tagsIndex');
@@ -86,7 +98,7 @@ export function deleteTagItem(tagId) {
   });
 
   _syncIndex();
-  saveAppState();
+  saveTagsHierarchy();
 }
 
 export function renameTagItem(tagId, newName) {
@@ -101,5 +113,5 @@ export function renameTagItem(tagId, newName) {
     return current;
   });
 
-  saveAppState();
+  saveTagsHierarchy();
 }

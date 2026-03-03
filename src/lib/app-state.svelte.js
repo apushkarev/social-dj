@@ -15,7 +15,6 @@ const PERSISTED_KEYS = [
   'librarySortColumn',
   'librarySortDirection',
   'volume',
-  'tagsHierarchy',
   'tag-open-groups',
   'tags-scroll-pos',
   'vdjDatabasePath',
@@ -59,6 +58,17 @@ export async function initAppState() {
         for (const key of PERSISTED_KEYS) {
           if (key in data) globals.set(key, data[key]);
         }
+      }
+    }
+  } catch {}
+
+  // Load tags hierarchy from its own file (separate from app-state.json)
+  try {
+    const tagsRes = await fetch('/library/tags-hierarchy.json');
+    if (tagsRes.ok) {
+      const tagsData = await tagsRes.json();
+      if (Array.isArray(tagsData?.tagsHierarchy)) {
+        globals.set('tagsHierarchy', tagsData.tagsHierarchy);
       }
     }
   } catch {}

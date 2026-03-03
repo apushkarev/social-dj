@@ -97,7 +97,9 @@
       {@html isGroup ? icons.folder : icons.tag}
     </span>
 
-    <span class="label">{node.name}</span>
+    <span class="label">
+      {node.name}{#if !isGroup && node.tracks !== undefined}<span class="track-count"> ({node.tracks.length})</span>{/if}
+    </span>
 
     {#if isGroup}
       <span class="node-actions" onclick={e => e.stopPropagation()}>
@@ -211,6 +213,12 @@
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .track-count {
+    opacity: 0.8;
+    font-size: 0.9em;
+    margin-left: 0.25em;
   }
 
   .node-actions {
