@@ -582,6 +582,30 @@
       ? sortedTracks.filter(t => selectedTrackIds.has(t.trackId)).map(t => t.trackId)
       : [track.trackId];
 
+    // Cmd (Mac) / Alt (Win) held at drag start → force external file drag immediately,
+    // bypassing the reorder / window-exit detection flow.
+    const isMac = window.electronAPI?.platform === 'darwin';
+    const forceExternal = isMac ? e.metaKey : e.altKey;
+
+    if (forceExternal) {
+
+      _fileDragStarted = true;
+
+      const fileLocations = _dragIds
+        .map(id => library?.tracks[String(id)]?.location)
+        .filter(Boolean);
+
+      if (fileLocations.length) window.electronAPI.startFileDrag(fileLocations);
+
+      dragStore.start(_dragIds, selectedPlaylistId ?? null);
+
+      document.addEventListener('pointerup', handleDragPointerUp, true);
+      window.addEventListener('pointerup', handleDragPointerUp);
+      document.addEventListener('pointermove', handleDragPointerMove, true);
+
+      return;
+    }
+
     reorderingTrackIds = new Set(_dragIds.map(String));
     reorderActive = true;
 
