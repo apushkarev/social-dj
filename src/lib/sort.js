@@ -1,12 +1,12 @@
 // Color ordering for tag sort. Matches the CYCLE in PlaylistView.
 export const TAG_CYCLE = [
   null,
-  'var(--red)',
-  'var(--bristol-orange)',
-  'var(--yellow-warm)',
-  'var(--meadow-green)',
-  'var(--mint)',
   'var(--cornflower-blue)',
+  'var(--mint)',
+  'var(--meadow-green)',
+  'var(--yellow-warm)',
+  'var(--bristol-orange)',
+  'var(--red)',
 ];
 
 // Toggles sort direction between ascending (1) and descending (-1).
