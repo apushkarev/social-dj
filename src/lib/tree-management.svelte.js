@@ -67,6 +67,56 @@ export function deleteTreeItem(nodeId) {
   saveHierarchy();
 }
 
+function buildTrackIdByLocation(tracks) {
+  const map = new Map();
+
+  for (const [trackId, track] of Object.entries(tracks ?? {})) {
+    if (!track?.location) continue;
+
+    map.set(track.location, track.trackId ?? Number(trackId));
+  }
+
+  return map;
+}
+
+export async function importVdjFolderPlaylist(parentFolderId) {
+  const library = globals.get('library');
+  if (!library?.tracks) return null;
+
+  if (!window.electronAPI?.showOpenDialog || !window.electronAPI?.parseVdjFolder) return null;
+
+  const vdjDatabasePath = globals.get('vdjDatabasePath') ?? null;
+
+  const dialogResult = await window.electronAPI.showOpenDialog({
+    title: 'Import .vdjfolder playlist',
+    filters: [{ name: 'VirtualDJ playlists', extensions: ['vdjfolder'] }],
+    properties: ['openFile'],
+    vdjPathType: 'myLists',
+    vdjDatabasePath,
+  });
+
+  if (dialogResult.canceled || !dialogResult.filePaths.length) return null;
+
+  const parseResult = await window.electronAPI.parseVdjFolder(dialogResult.filePaths[0]);
+
+  if (!parseResult.success) {
+    throw new Error(parseResult.error ?? 'Failed to import .vdjfolder playlist');
+  }
+
+  const trackIdByLocation = buildTrackIdByLocation(library.tracks);
+  const matchedTrackIds = [];
+
+  for (const location of parseResult.data.trackLocations) {
+    const trackId = trackIdByLocation.get(location);
+
+    if (trackId == null) continue;
+
+    matchedTrackIds.push(trackId);
+  }
+
+  return createTreeItem(parentFolderId, 'playlist', parseResult.data.name, matchedTrackIds);
+}
+
 // Renames the node with nodeId. Index paths are unaffected by name changes.
 export function renameTreeItem(nodeId, newName) {
   const library = globals.get('library');
@@ -279,11 +329,11 @@ export function setNodeSort(nodeId, sortColumn, sortDirection) {
 
 // Adds a new item under parentFolderId (or at root when null), updates globals, persists.
 // Returns { newId, newHierarchy, newIndex } or null if parent not found.
-export function createTreeItem(parentFolderId, type, name) {
+export function createTreeItem(parentFolderId, type, name, trackIds = []) {
   const newId = generateId();
   const newItem = type === 'folder'
     ? { id: newId, type: 'folder', name, parentId: parentFolderId, children: [] }
-    : { id: newId, type: 'playlist', name, parentId: parentFolderId, trackIds: [] };
+    : { id: newId, type: 'playlist', name, parentId: parentFolderId, trackIds: [...trackIds] };
 
   if (parentFolderId === null) {
     globals.update('library', current => {

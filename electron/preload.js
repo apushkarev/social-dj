@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
   getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
+  parseVdjFolder: (filePath) => ipcRenderer.invoke('parse-vdj-folder', filePath),
   addTrack: (filePath, vdjDbPath) => ipcRenderer.invoke('add-track', filePath, vdjDbPath),
   deleteTracks: (trackIds) => ipcRenderer.invoke('delete-tracks', trackIds),
   getPathForFile: (file) => webUtils.getPathForFile(file),

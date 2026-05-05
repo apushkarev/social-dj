@@ -162,6 +162,96 @@ function findVdjSong(xmlContent, filePath) {
   };
 }
 
+function decodeXmlEntities(value) {
+  if (!value) return '';
+
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+function parseVdjFolderPlaylist(filePath) {
+  const xmlContent = readFileSync(filePath, 'utf-8');
+
+  const songs = [];
+  const songRegex = /<song\b([^>]*)\/?>/gi;
+
+  let match;
+  let sourceIndex = 0;
+
+  while ((match = songRegex.exec(xmlContent))) {
+    const attrs = match[1] ?? '';
+
+    const pathMatch = /\bpath="([^"]*)"/i.exec(attrs);
+    const idxMatch = /\bidx="([^"]*)"/i.exec(attrs);
+
+    const songPath = decodeXmlEntities(pathMatch?.[1] ?? '');
+    const songIndex = parseInt(idxMatch?.[1] ?? '', 10);
+
+    if (!songPath) {
+      sourceIndex += 1;
+      continue;
+    }
+
+    songs.push({
+      path: songPath,
+      location: pathToFileURL(songPath).href,
+      order: Number.isNaN(songIndex) ? sourceIndex : songIndex,
+      sourceIndex,
+    });
+
+    sourceIndex += 1;
+  }
+
+  songs.sort((a, b) => {
+    if (a.order !== b.order) return a.order - b.order;
+
+    return a.sourceIndex - b.sourceIndex;
+  });
+
+  return {
+    name: basename(filePath, extname(filePath)),
+    trackPaths: songs.map(song => song.path),
+    trackLocations: songs.map(song => song.location),
+  };
+}
+
+function pathExists(filePath) {
+  try {
+    statSync(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getVirtualDjRootPath(vdjDatabasePath) {
+  if (vdjDatabasePath) return dirname(vdjDatabasePath);
+
+  if (process.platform === 'win32') {
+    return resolve(app.getPath('documents'), 'VirtualDJ');
+  }
+
+  return resolve(app.getPath('home'), 'Library', 'Application Support', 'VirtualDJ');
+}
+
+function getDefaultDialogPath(vdjPathType, vdjDatabasePath) {
+  if (!vdjPathType) return undefined;
+
+  const rootPath = getVirtualDjRootPath(vdjDatabasePath);
+
+  if (vdjPathType === 'myLists') {
+    const myListsPath = resolve(rootPath, 'MyLists');
+
+    if (pathExists(myListsPath)) return myListsPath;
+  }
+
+  return rootPath;
+}
+
 // Sorts a tags array by tagsSortOrder (ascending — lower number = first).
 // Tags not listed in sortOrder sort after known ones, then alphabetically.
 function sortTagsByOrder(tags, sortOrder) {
@@ -380,7 +470,26 @@ ipcMain.on('show-in-folder', (_event, fileUrl) => {
 
 ipcMain.handle('show-open-dialog', async (event, options) => {
   const win = BrowserWindow.fromWebContents(event.sender);
-  return dialog.showOpenDialog(win, options);
+
+  const {
+    vdjPathType,
+    vdjDatabasePath,
+    ...dialogOptions
+  } = options ?? {};
+
+  if (!dialogOptions.defaultPath) {
+    dialogOptions.defaultPath = getDefaultDialogPath(vdjPathType, vdjDatabasePath);
+  }
+
+  return dialog.showOpenDialog(win, dialogOptions);
+});
+
+ipcMain.handle('parse-vdj-folder', (_event, filePath) => {
+  try {
+    return { success: true, data: parseVdjFolderPlaylist(filePath) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 });
 
 ipcMain.on('write-app-state', (_event, data) => {

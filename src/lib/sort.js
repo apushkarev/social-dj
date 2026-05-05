@@ -48,8 +48,8 @@ export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags, ta
         const last = TAG_CYCLE.length;
 
         if (ra === last && rb === last) return 0;
-        if (ra === last) return 1;
-        if (rb === last) return -1;
+        if (ra === last) return -1;
+        if (rb === last) return 1;
 
         return sortDirection * (ra - rb);
       }

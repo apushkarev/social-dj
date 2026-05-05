@@ -822,6 +822,8 @@
         <h1 class="playlist-title">{breadcrumb}</h1>
         {#if index < breadcrumbs.length - 1}
           <h1 class="playlist-title delimiter">{delimiter}</h1>
+        {:else}
+          <h1 class="playlist-title">({displayTracks.length})</h1>
         {/if}
       {/each}
 

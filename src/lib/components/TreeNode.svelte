@@ -8,7 +8,7 @@
   import AddTreeItem from './AddTreeItem.svelte';
   import RenameTreeItem from './RenameTreeItem.svelte';
   import { contextMenu } from '../context-menu.svelte.js';
-  import { deleteTreeItem, addTracksToPlaylist, moveTreeNode } from '../tree-management.svelte.js';
+  import { deleteTreeItem, addTracksToPlaylist, moveTreeNode, importVdjFolderPlaylist } from '../tree-management.svelte.js';
   import { dragStore } from '../drag-state.svelte.js';
 
   let {
@@ -89,6 +89,51 @@
     }, 75);
   }
 
+  async function handleImportVdjFolder() {
+    try {
+      const result = await importVdjFolderPlaylist(node.id);
+      if (!result?.newId) return;
+
+      if (!treeState.isOpen(node.id)) treeState.toggle(node.id);
+
+      globals.set('selectedFolderView', null);
+      globals.set('selectedPlaylistId', result.newId);
+
+      saveAppState();
+    } catch (err) {
+      console.error('Failed to import .vdjfolder playlist:', err);
+    }
+  }
+
+  function getContextMenuItems() {
+    const items = [
+      {
+        icon: 'edit',
+        text: 'Rename',
+        callback: () => { showRenameModal = true; },
+      },
+    ];
+
+    if (isFolder) {
+      items.push({
+        icon: 'addPlaylist',
+        text: 'Import .vdjfolder playlist',
+        callback: handleImportVdjFolder,
+      });
+    }
+
+    items.push(
+      { type: 'separator' },
+      {
+        icon: 'trash',
+        text: 'Delete',
+        callback: handleDelete,
+      },
+    );
+
+    return items;
+  }
+
   // --- Node drag (source, all nodes) ---
 
   function createNodeDragGhost() {
@@ -166,26 +211,20 @@
   }
 
   function handleContextMenu(e) {
-
-    const node = e.currentTarget
+    const nodeEl = e.currentTarget;
 
     e.preventDefault();
     contextX = e.clientX;
     contextY = e.clientY;
 
-    contextMenu.show(e.clientX, e.clientY, [
-      {
-        icon: 'edit',
-        text: 'Rename',
-        callback: () => { showRenameModal = true; },
-      },
-      { type: 'separator' },
-      {
-        icon: 'trash',
-        text: 'Delete',
-        callback: handleDelete,
-      },
-    ], node, 'mouse', 'target');
+    contextMenu.show(
+      e.clientX,
+      e.clientY,
+      getContextMenuItems(),
+      nodeEl,
+      'mouse',
+      'target'
+    );
   }
 
   async function handleDelete() {

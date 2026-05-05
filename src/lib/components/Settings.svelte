@@ -25,6 +25,8 @@
       title: 'Select VirtualDJ database file',
       filters: [{ name: 'XML files', extensions: ['xml'] }],
       properties: ['openFile'],
+      vdjPathType: 'root',
+      vdjDatabasePath,
     });
 
     if (result.canceled || !result.filePaths.length) return;
