@@ -163,6 +163,10 @@
     margin-bottom: 0.25em;
   }
 
+  .menu-item:last-of-type {
+    margin-bottom: 0;
+  }
+
   .menu-item.active {
     background-color: var(--yellow-warm-80);
     color: var(--black4);
