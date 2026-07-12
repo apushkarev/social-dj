@@ -4,6 +4,7 @@ import { dirname, join, resolve, extname, basename } from 'path';
 import { writeFileSync, readFileSync, mkdirSync, statSync, createReadStream } from 'fs';
 import { randomBytes } from 'crypto';
 import { Readable } from 'stream';
+import { parseFile } from 'music-metadata';
 import plist from 'plist';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -116,61 +117,154 @@ function buildHierarchy(flatItems) {
 
 // --- VDJ database parser ---
 
-// Finds and returns raw metadata for a single song from the VDJ XML string.
-// filePath must match the VDJ <Song FilePath="..."> attribute exactly
-// (raw filesystem path, not URI-encoded).
-function findVdjSong(xmlContent, filePath) {
-
-  const searchStr = `FilePath="${filePath}"`;
-  const filePathIdx = xmlContent.indexOf(searchStr);
-  if (filePathIdx === -1) return null;
-
-  const songStart = xmlContent.lastIndexOf('<Song ', filePathIdx);
-  if (songStart === -1) return null;
-
-  const songEnd = xmlContent.indexOf('</Song>', filePathIdx);
-  if (songEnd === -1) return null;
-
-  const block = xmlContent.slice(songStart, songEnd + 7);
-
-  const getAttr = (str, name) => {
-    const m = new RegExp(`\\b${name}="([^"]*)"`, 'i').exec(str);
-    return m ? m[1] : null;
-  };
-
-  const tagsMatch  = /<Tags\b([^>]*)\/?>/i.exec(block);
-  const infosMatch = /<Infos\b([^>]*)\/?>/i.exec(block);
-  const scanMatch  = /<Scan\b([^>]*)\/?>/i.exec(block);
-  const commentMatch = /<Comment>([^<]*)<\/Comment>/i.exec(block);
-
-  const tagsAttrs  = tagsMatch  ? tagsMatch[1]  : '';
-  const infosAttrs = infosMatch ? infosMatch[1] : '';
-  const scanAttrs  = scanMatch  ? scanMatch[1]  : '';
-
-  const scanBpm  = parseFloat(getAttr(scanAttrs,  'Bpm') ?? '0');
-  const tagsBpm  = parseFloat(getAttr(tagsAttrs,  'Bpm') ?? '0');
-  const bpmRaw   = scanBpm || tagsBpm || 0;
-
-  return {
-    title:        getAttr(tagsAttrs,  'Title'),
-    author:       getAttr(tagsAttrs,  'Author'),
-    bpm:          bpmRaw ? Math.round(60 / bpmRaw) : 0,
-    totalTime:    Math.round(parseFloat(getAttr(infosAttrs, 'SongLength') ?? '0') * 1000),
-    lastModified: parseInt(getAttr(infosAttrs, 'LastModified') ?? '0', 10),
-    firstSeen:    parseInt(getAttr(infosAttrs, 'FirstSeen')    ?? '0', 10),
-    comment:      commentMatch ? commentMatch[1].trim() : '',
-  };
-}
 
 function decodeXmlEntities(value) {
   if (!value) return '';
+  return value.replace(/&(#(?:x|X)[0-9a-fA-F]+|#\d+|amp|apos|quot|lt|gt);/g, (match, entity) => {
+    if (entity.startsWith('#')) {
+      const isHex = entity[1] === 'x' || entity[1] === 'X';
+      const codePoint = parseInt(entity.slice(isHex ? 2 : 1), isHex ? 16 : 10);
 
-  return value
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+      if (
+        !Number.isInteger(codePoint) ||
+        codePoint < 0 ||
+        codePoint > 0x10ffff ||
+        (codePoint >= 0xd800 && codePoint <= 0xdfff)
+      ) {
+        return match;
+      }
+
+      try {
+        return String.fromCodePoint(codePoint);
+      } catch {
+        return match;
+      }
+    }
+
+    if (entity === 'quot') return '"';
+    if (entity === 'apos') return "'";
+    if (entity === 'lt') return '<';
+    if (entity === 'gt') return '>';
+    if (entity === 'amp') return '&';
+
+    return match;
+  });
+}
+
+function getXmlAttr(str, name) {
+  const match = new RegExp(`\\b${name}="([^"]*)"`, 'i').exec(str);
+
+  if (!match) return null;
+
+  return decodeXmlEntities(match[1]);
+}
+
+function normalizePathForComparison(value) {
+  if (!value) return '';
+
+  let normalized = value.normalize('NFC').replace(/\\/g, '/');
+
+  if (process.platform === 'win32') {
+    normalized = normalized.toLowerCase();
+  }
+
+  return normalized;
+}
+
+// Finds and returns raw metadata for a single song from the VDJ XML string.
+// filePath is compared against decoded <Song FilePath="..."> values after
+// Unicode normalization so XML entities and composed/decomposed characters match.
+function findVdjSong(xmlContent, filePath) {
+  const normalizedFilePath = normalizePathForComparison(filePath);
+  const songRegex = /<Song\b([^>]*)>/gi;
+
+  let songMatch;
+
+  while ((songMatch = songRegex.exec(xmlContent))) {
+    const songAttrs = songMatch[1] ?? '';
+    const songFilePath = getXmlAttr(songAttrs, 'FilePath');
+
+    if (!songFilePath) continue;
+
+    if (normalizePathForComparison(songFilePath) !== normalizedFilePath) continue;
+
+    const songStart = songMatch.index;
+    const songEnd = xmlContent.indexOf('</Song>', songRegex.lastIndex);
+
+    if (songEnd === -1) return null;
+
+    const block = xmlContent.slice(songStart, songEnd + 7);
+
+    const tagsMatch = /<Tags\b([^>]*)\/?>/i.exec(block);
+    const infosMatch = /<Infos\b([^>]*)\/?>/i.exec(block);
+    const scanMatch = /<Scan\b([^>]*)\/?>/i.exec(block);
+    const commentMatch = /<Comment>([\s\S]*?)<\/Comment>/i.exec(block);
+
+    const tagsAttrs = tagsMatch ? tagsMatch[1] : '';
+    const infosAttrs = infosMatch ? infosMatch[1] : '';
+    const scanAttrs = scanMatch ? scanMatch[1] : '';
+
+    const scanBpm = parseFloat(getXmlAttr(scanAttrs, 'Bpm') ?? '0');
+    const tagsBpm = parseFloat(getXmlAttr(tagsAttrs, 'Bpm') ?? '0');
+    const bpmRaw = scanBpm || tagsBpm || 0;
+
+    return {
+      title: getXmlAttr(tagsAttrs, 'Title'),
+      author: getXmlAttr(tagsAttrs, 'Author'),
+      bpm: bpmRaw ? Math.round(60 / bpmRaw) : 0,
+      totalTime: Math.round(parseFloat(getXmlAttr(infosAttrs, 'SongLength') ?? '0') * 1000),
+      lastModified: parseInt(getXmlAttr(infosAttrs, 'LastModified') ?? '0', 10),
+      firstSeen: parseInt(getXmlAttr(infosAttrs, 'FirstSeen') ?? '0', 10),
+      comment: commentMatch ? decodeXmlEntities(commentMatch[1]).trim() : '',
+    };
+  }
+
+  return null;
+}
+
+async function readAudioFileCommentValues(filePath) {
+  try {
+    const metadata = await parseFile(filePath, { duration: false, skipCovers: true });
+    const rawComments = Array.isArray(metadata.common.comment) ? metadata.common.comment : [];
+    const commentValues = [];
+    const seen = new Set();
+
+    for (const comment of rawComments) {
+      let value = '';
+
+      if (typeof comment === 'string') value = comment.trim();
+      if (typeof comment === 'object') value = comment?.text?.trim() ?? '';
+
+      if (!value || seen.has(value)) continue;
+
+      seen.add(value);
+      commentValues.push(value);
+    }
+
+    return commentValues;
+  } catch {
+    return [];
+  }
+}
+
+function parseTagsFromCommentValues(values) {
+  const tags = [];
+  const seen = new Set();
+
+  for (const value of values) {
+    if (!value) continue;
+
+    for (const part of value.split(',')) {
+      const tag = part.trim();
+
+      if (!tag || seen.has(tag)) continue;
+
+      seen.add(tag);
+      tags.push(tag);
+    }
+  }
+
+  return tags;
 }
 
 function parseVdjFolderPlaylist(filePath) {
@@ -291,7 +385,7 @@ function addTrackToTagNodes(libraryDir, trackId, tagNames) {
   } catch {}
 }
 
-ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
+ipcMain.handle('add-track', async (_event, filePath, vdjDbPath) => {
   try {
     const libraryDir = resolve(__dirname, '..', 'public', 'library');
     const tracksPath = resolve(libraryDir, 'tracks.json');
@@ -317,6 +411,7 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
     let comments  = '';
     let dateModified = new Date().toISOString();
     let dateAdded    = new Date().toISOString();
+    const fileCommentValues = await readAudioFileCommentValues(filePath);
 
     if (vdjDbPath) {
       try {
@@ -335,6 +430,10 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
       } catch {}
     }
 
+    if (!comments && fileCommentValues.length) {
+      comments = fileCommentValues.join(', ');
+    }
+
     // Populate tags from comments field (comma-separated tag names),
     // sorted by tagsSortOrder from tags-hierarchy.json.
     let tagsSortOrder = {};
@@ -343,9 +442,7 @@ ipcMain.handle('add-track', (_event, filePath, vdjDbPath) => {
       tagsSortOrder = tagsData?.tagsSortOrder ?? {};
     } catch {}
 
-    const rawTags = comments
-      ? comments.split(',').map(t => t.trim()).filter(Boolean)
-      : [];
+    const rawTags = parseTagsFromCommentValues([comments, ...fileCommentValues]);
     const tags = sortTagsByOrder(rawTags, tagsSortOrder);
 
     const track = {
