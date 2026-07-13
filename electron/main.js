@@ -10,6 +10,8 @@ import plist from 'plist';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isDev = !app.isPackaged;
 
+const APP_ICON_PATH = resolve(__dirname, '..', 'public', 'sdj_icon.png');
+
 // Must be called before app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'media', privileges: { secure: true, supportFetchAPI: true, stream: true, bypassCSP: true } }
@@ -21,6 +23,7 @@ function createWindow() {
     height: 900,
     minWidth: 800,
     minHeight: 600,
+    icon: APP_ICON_PATH,
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -624,6 +627,11 @@ ipcMain.handle('parse-itunes-library', async (_event, xmlContent) => {
 
 app.setName('Social DJ');
 app.whenReady().then(() => {
+
+  // macOS Dock icon (the BrowserWindow `icon` option is ignored on macOS).
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(nativeImage.createFromPath(APP_ICON_PATH));
+  }
 
   // Proxy media:// -> file:// so the renderer can stream local audio files.
   // Handles Range requests manually (net.fetch ignores Range for file:// URLs),
