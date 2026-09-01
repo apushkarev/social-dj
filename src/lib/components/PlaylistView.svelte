@@ -9,6 +9,7 @@
   import { saveAppState } from '../app-state.svelte.js';
   import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
+  import ConfirmModal from './ConfirmModal.svelte';
   import { slide } from 'svelte/transition';
 
   let library            = $derived(globals.get('library'));
@@ -32,6 +33,12 @@
   let _originalTrackIds = [];        // snapshot of sortedTracks order at drag start
   let _pollInterval = null;
   let _pollActive = false;
+
+  // Delete-from-library confirmation
+  let showDeleteConfirm = $state(false);
+  let deleteConfirmX = $state(0);
+  let deleteConfirmY = $state(0);
+  let pendingDeleteIds = $state([]);
 
   $effect(() => {
     selectedPlaylistId;
@@ -801,21 +808,42 @@
       );
     }
 
+    // Coordinates are read now — the callback runs after the menu's exit
+    // animation, and the confirm modal opens where the menu was.
+    const menuX = e.clientX;
+    const menuY = e.clientY;
+
     items.push(
       { type: 'separator' },
       {
         icon: 'trash',
         text: 'Delete from library',
+        color: 'var(--red)',
         callback: () => {
 
-          deleteTracksFromLibrary(ids);
-          selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
-          if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+          pendingDeleteIds = ids;
+          deleteConfirmX = menuX;
+          deleteConfirmY = menuY;
+          showDeleteConfirm = true;
         },
       },
     );
 
     contextMenu.show(e.clientX, e.clientY, items, row, 'mouse', 'target');
+  }
+
+  // Runs only after the user confirms in the modal. Removes the tracks from the
+  // library and every playlist referencing them; files on disk are untouched.
+  function deleteFromLibrary() {
+
+    const idsSet = new Set(pendingDeleteIds.map(String));
+
+    deleteTracksFromLibrary(pendingDeleteIds);
+
+    selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
+    if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+
+    pendingDeleteIds = [];
   }
 
   function formatTime(ms) {
@@ -985,6 +1013,18 @@
   {/if}
 
 {/if}
+
+<ConfirmModal
+  x={deleteConfirmX}
+  y={deleteConfirmY}
+  bind:visible={showDeleteConfirm}
+  title="Delete from library"
+  message={pendingDeleteIds.length === 1
+    ? 'This track will be removed from the library and from every playlist it appears in. The file on disk is not deleted.'
+    : `These ${pendingDeleteIds.length} tracks will be removed from the library and from every playlist they appear in. The files on disk are not deleted.`}
+  confirmText="Delete"
+  onconfirm={deleteFromLibrary}
+/>
 
 <style>
   .playlist-view {

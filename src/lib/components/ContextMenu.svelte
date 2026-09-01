@@ -112,6 +112,7 @@
         <div
           class="menu-item"
           class:active={hoveredIndex === i}
+          style={item.color ? `--item-accent: ${item.color};` : ''}
           onmouseenter={() => hoveredIndex = i}
           onmouseleave={() => { if (hoveredIndex === i) hoveredIndex = null; }}
           onclick={e => handleItemClick(e, item, i)}
@@ -167,8 +168,10 @@
     margin-bottom: 0;
   }
 
+  /* Items opt into a highlight color by setting `color` on the item —
+     e.g. color: 'var(--red)' for destructive actions. Defaults to yellow. */
   .menu-item.active {
-    background-color: var(--yellow-warm-80);
+    background-color: var(--item-accent, var(--yellow-warm-80));
     color: var(--black4);
   }
 
