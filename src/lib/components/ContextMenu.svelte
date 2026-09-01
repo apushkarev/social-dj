@@ -13,6 +13,22 @@
   const ANCHOR_GAP = 4;
   const CURSOR_OFFSET_X = 6;
   const CURSOR_OFFSET_Y = 6;
+  const SUBMENU_GAP = 2;
+
+  // Submenu state. `submenuIndex` is deliberately separate from `hoveredIndex`:
+  // the panel has to survive the pointer leaving the parent row on its way into
+  // the panel itself, so only hovering a *different* item closes it.
+  let itemEls = $state([]);
+  let submenuEl = $state();
+  let submenuIndex = $state(null);
+  let submenuX = $state(0);
+  let submenuY = $state(0);
+  let submenuPositioned = $state(false);
+
+  function handleItemEnter(item, i) {
+    hoveredIndex = i;
+    submenuIndex = item.submenu ? i : null;
+  }
 
   $effect(() => {
     const visible = contextMenu.visible;
@@ -69,13 +85,60 @@
     } else {
       positioned = false;
       hoveredIndex = null;
+      submenuIndex = null;
     }
+  });
+
+  // Places the submenu beside its parent row: to the right of the menu, flipped
+  // to the left when it would overflow. Its height is capped by CSS at the
+  // viewport, so the measured height is already the final one — a taller tree
+  // simply scrolls inside the panel.
+  $effect(() => {
+
+    const idx = submenuIndex;
+
+    if (idx === null || !contextMenu.visible) {
+      submenuPositioned = false;
+      return;
+    }
+
+    submenuPositioned = false;
+
+    requestAnimationFrame(() => {
+
+      const anchor = itemEls[idx];
+
+      if (!submenuEl || !anchor || !menuEl) return;
+
+      const itemRect = anchor.getBoundingClientRect();
+      const menuRect = menuEl.getBoundingClientRect();
+      const { width, height } = submenuEl.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let sx = menuRect.right + SUBMENU_GAP;
+
+      if (sx + width > vw - MARGIN) sx = menuRect.left - width - SUBMENU_GAP;
+      if (sx < MARGIN)              sx = MARGIN;
+
+      let sy = itemRect.top;
+
+      if (sy + height > vh - MARGIN) sy = vh - MARGIN - height;
+      if (sy < MARGIN)               sy = MARGIN;
+
+      submenuX = sx;
+      submenuY = sy;
+      submenuPositioned = true;
+    });
   });
 
   function handleItemClick(e, item, i) {
     e.stopPropagation();
 
-    hoveredIndex = null;        
+    // Parent rows only reveal their submenu on hover — nothing to invoke.
+    if (item.submenu) return;
+
+    hoveredIndex = null;
 
     setTimeout(() => {
       hoveredIndex = i;         
@@ -110,19 +173,38 @@
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
+          bind:this={itemEls[i]}
           class="menu-item"
-          class:active={hoveredIndex === i}
+          class:active={hoveredIndex === i || submenuIndex === i}
           style={item.color ? `--item-accent: ${item.color};` : ''}
-          onmouseenter={() => hoveredIndex = i}
+          onmouseenter={() => handleItemEnter(item, i)}
           onmouseleave={() => { if (hoveredIndex === i) hoveredIndex = null; }}
           onclick={e => handleItemClick(e, item, i)}
         >
           <span class="item-icon">{@html icons[item.icon]}</span>
           <span class="item-text">{item.text}</span>
+          {#if item.submenu}
+            <span class="item-arrow">{@html icons.arrowLeft}</span>
+          {/if}
         </div>
       {/if}
     {/each}
   </div>
+
+  {#if submenuIndex !== null && contextMenu.items[submenuIndex]?.submenu}
+    {@const submenu = contextMenu.items[submenuIndex].submenu}
+    {@const SubmenuContent = submenu.component}
+
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      bind:this={submenuEl}
+      class="submenu"
+      class:positioned={submenuPositioned}
+      style="left: {submenuX}px; top: {submenuY}px;"
+    >
+      <SubmenuContent {...submenu.props ?? {}} />
+    </div>
+  {/if}
 {/if}
 
 <style>
@@ -145,6 +227,28 @@
   }
 
   .menu.positioned {
+    opacity: 1;
+  }
+
+  /* Sized to its content, but never taller than the viewport — past that it
+     scrolls internally rather than growing off-screen. */
+  .submenu {
+    position: fixed;
+    z-index: 102;
+    width: max-content;
+    min-width: 12em;
+    max-width: 28em;
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--brad2);
+    box-shadow: var(--bxs);
+    opacity: 0;
+  }
+
+  .submenu.positioned {
     opacity: 1;
   }
 
@@ -186,6 +290,18 @@
 
   .item-text {
     font-weight: 500;
+  }
+
+  /* Points right — same orientation as a collapsed folder arrow in the tree. */
+  .item-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    transform: rotate(-180deg);
   }
 
   .item-icon :global(svg) {

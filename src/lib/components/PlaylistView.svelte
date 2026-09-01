@@ -10,6 +10,8 @@
   import { icons } from '../icons.js';
   import ColorTag from './ColorTag.svelte';
   import ConfirmModal from './ConfirmModal.svelte';
+  import PlaylistSubtree from './PlaylistSubtree.svelte';
+  import { filterHierarchyByTrack } from '../playlist-filter.js';
   import { slide } from 'svelte/transition';
 
   let library            = $derived(globals.get('library'));
@@ -355,6 +357,31 @@
   let tagsSortOrder = $derived(globals.get('tagsSortOrder') ?? {});
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags, tagsSortOrder));
+
+  // Set by "Show in playlist" just before navigating. Switching playlists wipes
+  // the selection (see the effect near the top), so the reveal has to wait for
+  // the new track list to arrive — this effect is declared after that one, so it
+  // re-applies the selection once the target track is actually on screen.
+  let pendingRevealTrackId = $state(null);
+
+  $effect(() => {
+
+    const trackId = pendingRevealTrackId;
+
+    if (trackId === null) return;
+    if (!sortedTracks.some(t => t.trackId === trackId)) return;
+
+    pendingRevealTrackId = null;
+
+    selectedTrackIds = new Set([trackId]);
+    anchorTrackId = trackId;
+
+    requestAnimationFrame(() => {
+      trackScrollEl
+        ?.querySelector(`[data-track-id="${trackId}"]`)
+        ?.scrollIntoView({ block: 'center' });
+    });
+  });
 
   // During reorder drag shows live-reordered list; otherwise shows normal sorted list.
   let displayTracks = $derived(
@@ -792,6 +819,27 @@
       },
     ];
 
+    // Only meaningful for a single track, and only when it actually lives
+    // somewhere — otherwise the item is left out entirely.
+    if (ids.length === 1) {
+
+      const matches = filterHierarchyByTrack(library?.hierarchy ?? [], track.trackId);
+
+      if (matches.length) {
+        items.push({
+          icon: 'playlist',
+          text: 'Show in playlist',
+          submenu: {
+            component: PlaylistSubtree,
+            props: {
+              hierarchy: matches,
+              onselect: node => revealTrackInPlaylist(node.id, track.trackId),
+            },
+          },
+        });
+      }
+    }
+
     if (selectedPlaylistId) {
       items.push(
         { type: 'separator' },
@@ -830,6 +878,20 @@
     );
 
     contextMenu.show(e.clientX, e.clientY, items, row, 'mouse', 'target');
+  }
+
+  // Navigates to a playlist from the "Show in playlist" subtree and reveals the
+  // track there. The selection itself is applied by the pendingRevealTrackId
+  // effect, once the new playlist's tracks have rendered.
+  function revealTrackInPlaylist(playlistId, trackId) {
+
+    contextMenu.hide();
+
+    globals.set('selectedFolderView', null);
+    globals.set('selectedPlaylistId', playlistId);
+    saveAppState();
+
+    pendingRevealTrackId = trackId;
   }
 
   // Runs only after the user confirms in the modal. Removes the tracks from the
@@ -959,6 +1021,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
           class="track-row data-row"
+          data-track-id={track.trackId}
           class:selected={selectedTrackIds.has(track.trackId)}
           class:playing={track.trackId === playingTrackId}
           class:reordering={reorderActive && isReorderAllowed && reorderingTrackIds.has(String(track.trackId))}
