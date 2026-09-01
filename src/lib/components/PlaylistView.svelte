@@ -46,6 +46,9 @@
     globals.set('currentViewTracks', sortedTracks);
   });
 
+  // Track of the in-progress right-click run (see handleTagRightClick).
+  let _tagRunTrackId = null;
+
   function nextColor(trackId) {
 
     const idx = TAG_CYCLE.indexOf(colorTags.get(String(trackId)));
@@ -53,7 +56,16 @@
     return TAG_CYCLE[(idx + 1) % TAG_CYCLE.length];
   }
 
+  function prevColor(trackId) {
+
+    const idx = TAG_CYCLE.indexOf(colorTags.get(String(trackId)));
+
+    return TAG_CYCLE[(idx - 1 + TAG_CYCLE.length) % TAG_CYCLE.length];
+  }
+
   function handleTagLeftClick(trackId) {
+
+    _tagRunTrackId = null;
 
     if (selectedTrackIds.has(trackId)) {
 
@@ -67,16 +79,28 @@
     }
   }
 
+  // The first right click clears the tag; each further right click on the same
+  // track keeps walking TAG_CYCLE backwards — red, orange, yellow, green, mint,
+  // blue, cleared. Left-clicking any tag, or right-clicking a different track,
+  // ends the run so the next right click clears again. An already-cleared tag
+  // has nothing to reset, so it joins the run straight away rather than
+  // spending a click on a no-op.
   function handleTagRightClick(trackId) {
+
+    const inRun = _tagRunTrackId === trackId || colorTags.get(String(trackId)) === null;
+
+    const next = inRun ? prevColor(trackId) : null;
+
+    _tagRunTrackId = trackId;
 
     if (selectedTrackIds.has(trackId)) {
 
-      for (const id of selectedTrackIds) colorTags.set(String(id), null);
+      for (const id of selectedTrackIds) colorTags.set(String(id), next);
 
     } else {
 
       selectedTrackIds = new Set();
-      colorTags.set(String(trackId), null);
+      colorTags.set(String(trackId), next);
     }
   }
 
