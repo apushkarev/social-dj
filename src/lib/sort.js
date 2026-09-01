@@ -16,7 +16,7 @@ export function nextSortDirection(current) {
 }
 
 // Returns TAG_CYCLE rank for a color value.
-// null / unknown → last rank (always sorts to the end).
+// null / unknown → highest rank, i.e. ordered after every color.
 function tagRank(color) {
 
   const idx = TAG_CYCLE.indexOf(color);
@@ -27,7 +27,8 @@ function tagRank(color) {
 // Returns a sorted copy of tracks, or the original array when no sort is active.
 // colorTags is the Map<string, string> of trackId → color.
 // Original insertion indices are preserved for the 'num' column.
-// For tag sort: null always appears last regardless of direction.
+// For tag (color) sort: descending runs blue → red then untagged, ascending
+// is its mirror — untagged, then red → blue.
 export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags, tagsSortOrder = {}) {
 
   if (!sortColumn || sortDirection === 0) return tracks;
@@ -45,13 +46,14 @@ export function getSortedTracks(tracks, sortColumn, sortDirection, colorTags, ta
 
         const ra = tagRank(colorTags?.get(String(a.trackId)));
         const rb = tagRank(colorTags?.get(String(b.trackId)));
-        const last = TAG_CYCLE.length;
 
-        if (ra === last && rb === last) return 0;
-        if (ra === last) return -1;
-        if (rb === last) return 1;
-
-        return sortDirection * (ra - rb);
+        // Descending walks TAG_CYCLE forward — blue, mint, green, yellow,
+        // orange, red — and leaves untagged last; ascending is the exact
+        // mirror, untagged first then red back down to blue. Both are the
+        // same total order, so untagged needs no special case: its rank
+        // already sits after every color. Direction is negated because
+        // rank 1 (blue) is the head of the descending run.
+        return -sortDirection * (ra - rb);
       }
 
       case 'bpm':
