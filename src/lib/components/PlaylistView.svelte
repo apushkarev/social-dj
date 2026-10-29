@@ -902,6 +902,18 @@
           if (track.location) window.electronAPI?.showInFolder(track.location);
         },
       },
+      {
+        icon: 'folder',
+        text: 'Copy',
+        // Copies every selected track's file, like Cmd+C on a Finder selection.
+        callback: () => {
+          const locations = ids
+            .map(id => library?.tracks[String(id)]?.location)
+            .filter(Boolean);
+
+          if (locations.length) window.electronAPI?.copyFiles(locations);
+        },
+      },
     ];
 
     // Only meaningful for a single track, and only when it actually lives

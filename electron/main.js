@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, protocol, shell, screen } from 'electron';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve, extname, basename } from 'path';
 import { writeFileSync, readFileSync, mkdirSync, statSync, createReadStream } from 'fs';
@@ -565,6 +565,28 @@ ipcMain.on('start-file-drag', (event, fileUrlPaths) => {
 ipcMain.on('show-in-folder', (_event, fileUrl) => {
   try {
     shell.showItemInFolder(fileURLToPath(fileUrl));
+  } catch {}
+});
+
+// Puts the tracks' audio files on the clipboard for pasting in Finder. macOS
+// reads NSFilenamesPboardType — a plist array of paths — and exposes each one
+// as its own file URL item. Missing files are dropped: one stale library entry
+// would otherwise make Finder reject the whole paste. Electron can't write the
+// native file formats elsewhere (Windows CF_HDROP is a struct, not a named
+// format), so other platforms get the paths as plain text instead.
+ipcMain.on('copy-files', (_event, fileUrls) => {
+  try {
+    const paths = fileUrls
+      .map(url => { try { return fileURLToPath(url); } catch { return null; } })
+      .filter(path => path && pathExists(path));
+
+    if (!paths.length) return;
+
+    if (process.platform === 'darwin') {
+      clipboard.writeBuffer('NSFilenamesPboardType', Buffer.from(plist.build(paths)));
+    } else {
+      clipboard.writeText(paths.join('\n'));
+    }
   } catch {}
 });
 

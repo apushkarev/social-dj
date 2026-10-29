@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveHierarchy: (data) => ipcRenderer.invoke('save-hierarchy', data),
   saveTagsHierarchy: (data) => ipcRenderer.invoke('save-tags-hierarchy', data),
   showInFolder: (fileUrl) => ipcRenderer.send('show-in-folder', fileUrl),
+  copyFiles: (fileUrls) => ipcRenderer.send('copy-files', fileUrls),
   getCursorScreenPoint: () => ipcRenderer.invoke('get-cursor-screen-point'),
   showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
   parseVdjFolder: (filePath) => ipcRenderer.invoke('parse-vdj-folder', filePath),
