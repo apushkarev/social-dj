@@ -5,6 +5,11 @@ let globalStorage = $state({
   selectedPlaylistId: null,
   playingPlaylistId: null,
 
+  // Snapshot of the view playback started from — { playlistId, folderView } —
+  // so Cmd/Ctrl+L can navigate back to it exactly. playingPlaylistId alone is
+  // only an id, which isn't enough to rebuild a folder/tag/search view.
+  playingView: null,
+
   searchQuery: '',
   searchResultIds: [],
   searchSortColumn: null,

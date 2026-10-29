@@ -108,7 +108,7 @@
     overflow: hidden;
     box-sizing: border-box;
     transition: background-color var(--td-100);
-    color: var(--fg2-s);
+    color: var(--fg3-s);
   }
 
   .heading-label {

@@ -20,6 +20,10 @@
   const EXTRA   = 64;  // 2em safety margin requested by formula
   const MIN_W   = 200;
 
+  const FONT_PX      = 14;    // .node-row font-size
+  const COUNT_SCALE  = 0.9;   // .track-count font-size
+  const COUNT_MARGIN = 0.25;  // .track-count margin-left, in its own em
+
   let _measureCtx = null;
   function getMeasureCtx() {
     if (!_measureCtx) {
@@ -37,8 +41,21 @@
     const isFolder = node.type === 'folder';
 
     ctx.font       = `${isFolder ? 600 : 500} 14px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
-    
-    const textW    = ctx.measureText(node.name).width;
+
+    let textW      = ctx.measureText(node.name).width;
+
+    // Playlists append a track count, rendered smaller and with its own left
+    // margin (see .track-count in TreeNode) — measure it at that size so long
+    // names don't lose their count to the ellipsis.
+    if (!isFolder) {
+
+      const countPx = FONT_PX * COUNT_SCALE;
+
+      ctx.font = `500 ${countPx}px Inter, -apple-system, BlinkMacSystemFont, sans-serif`;
+
+      textW += countPx * COUNT_MARGIN
+             + ctx.measureText(` (${node.trackIds?.length ?? 0})`).width;
+    }
     const icons    = isFolder
       ? ARROW_W + GAP + ICON_W + GAP   // arrow + gap + icon + gap
       : ICON_W + GAP;                  // icon + gap
@@ -64,9 +81,18 @@
       maxW = Math.max(maxW, calcNodeWidth(node, 0));
     }
 
-    onwidthchange(Math.ceil(maxW));
+    // calcNodeWidth returns content widths, but the reported width is the
+    // container's outer width — the scrollbar and border sit between the two.
+    // Folders hid this behind their EXTRA margin; playlists have no such slack
+    // now that they carry a track count.
+    const chrome = asideEl && scrollEl
+      ? Math.max(0, asideEl.offsetWidth - scrollEl.clientWidth)
+      : 0;
+
+    onwidthchange(Math.ceil(maxW + chrome));
   });
 
+  let asideEl = $state(null);
   let scrollEl = $state(null);
   let stopTimeout = $state(null);
 
@@ -279,7 +305,7 @@
   }
 </script>
 
-<aside class="library-tree">
+<aside class="library-tree" bind:this={asideEl}>
   <div
     class="tree-scroll"
     class:root-drag-over={isRootDragOver}

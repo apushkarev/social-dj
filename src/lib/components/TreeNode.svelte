@@ -310,7 +310,7 @@
       {@html isFolder ? icons.folder : icons.playlist}
     </span>
 
-    <span class="label">{node.name}</span>
+    <span class="label">{node.name}{#if !isFolder}<span class="track-count"> ({node.trackIds?.length ?? 0})</span>{/if}</span>
 
     {#if isFolder}
       <span class="node-actions" onclick={e => e.stopPropagation()}>
@@ -367,7 +367,7 @@
     height: 28px;
     border: none;
     background: none;
-    color: var(--fg2-s);
+    color: var(--fg3-s);
     font-family: inherit;
     font-size: 0.875em;
     font-weight: 400;
@@ -385,7 +385,7 @@
 
   .node-row.selected, .node-row.folder.selected {
     background-color: var(--overlay5);
-    color: var(--fg3-s);
+    color: var(--fg4-s);
   }
   
   .node-row.current-playing, .node-row.folder.current-playing {
@@ -409,7 +409,7 @@
   }
 
   .node-row.folder {
-    color: var(--fg2-s);
+    color: var(--fg3-s);
     font-weight: 600;
   }
 
@@ -422,7 +422,7 @@
     flex-shrink: 0;
     transform: rotate(-180deg);
     transition: transform var(--td-250);
-    color: var(--fg2-s);
+    color: var(--fg3-s);
   }
 
   .arrow.open {
@@ -434,11 +434,11 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    color: var(--fg2-s);
+    color: var(--fg3-s);
   }
 
   .selected .icon, .selected .arrow {
-    color: var(--fg3-s);
+    color: var(--fg4-s);
   }
 
   .current-playing .icon, .current-playing .arrow {
@@ -453,6 +453,13 @@
 
   .selected .label {
     font-weight: 600;
+  }
+
+  /* Matches the tag tree's count styling. */
+  .track-count {
+    opacity: 0.8;
+    font-size: 0.9em;
+    margin-left: 0.25em;
   }
 
   .node-actions {
@@ -477,7 +484,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--fg2-s);
+    color: var(--fg3-s);
     cursor: pointer;
   }
 
@@ -486,11 +493,11 @@
   }
 
   .action-icon:hover {
-    color: var(--fg3-s);
+    color: var(--fg4-s);
   }
 
   .action-icon:active {
-    color: var(--fg5-s);
+    color: var(--fg6-s);
   }
 
   .selected .action-icon:hover {

@@ -126,6 +126,10 @@
     // Snapshot the current view as the active playing queue.
     globals.set('currentPlayingTracks', sortedTracks);
     globals.set('playingPlaylistId', activeNodeId);
+    globals.set('playingView', {
+      playlistId: selectedPlaylistId,
+      folderView: selectedFolderView ? $state.snapshot(selectedFolderView) : null,
+    });
 
     globals.set('currentlyPlayingTrackId', trackId);
 
@@ -358,31 +362,6 @@
 
   let sortedTracks = $derived(getSortedTracks(tracks, sortColumn, sortDirection, colorTags, tagsSortOrder));
 
-  // Set by "Show in playlist" just before navigating. Switching playlists wipes
-  // the selection (see the effect near the top), so the reveal has to wait for
-  // the new track list to arrive — this effect is declared after that one, so it
-  // re-applies the selection once the target track is actually on screen.
-  let pendingRevealTrackId = $state(null);
-
-  $effect(() => {
-
-    const trackId = pendingRevealTrackId;
-
-    if (trackId === null) return;
-    if (!sortedTracks.some(t => t.trackId === trackId)) return;
-
-    pendingRevealTrackId = null;
-
-    selectedTrackIds = new Set([trackId]);
-    anchorTrackId = trackId;
-
-    requestAnimationFrame(() => {
-      trackScrollEl
-        ?.querySelector(`[data-track-id="${trackId}"]`)
-        ?.scrollIntoView({ block: 'center' });
-    });
-  });
-
   // During reorder drag shows live-reordered list; otherwise shows normal sorted list.
   let displayTracks = $derived(
     liveOrderIds
@@ -431,6 +410,113 @@
       ?.map(id => library?.tracks[String(id)])
       .filter(Boolean) ?? []
   );
+
+  // Set just before navigating, by "Show in playlist" and by Cmd/Ctrl+L. Two
+  // effects clear the selection on arrival — the one near the top on any view
+  // change, and the searchResultIds one above — so the reveal has to wait for
+  // the new track list and re-apply the selection afterwards. Declared after
+  // both on purpose: effects flush in declaration order, so this one wins.
+  let pendingRevealTrackId = $state(null);
+
+  $effect(() => {
+
+    const trackId = pendingRevealTrackId;
+
+    if (trackId === null) return;
+    if (!sortedTracks.some(t => t.trackId === trackId)) return;
+
+    pendingRevealTrackId = null;
+
+    selectedTrackIds = new Set([trackId]);
+    anchorTrackId = trackId;
+
+    requestAnimationFrame(() => {
+      trackScrollEl
+        ?.querySelector(`[data-track-id="${trackId}"]`)
+        ?.scrollIntoView({ block: 'center' });
+    });
+  });
+
+  // Cmd/Ctrl+L — jump to whatever is playing. Restores the view playback started
+  // from (playlist, folder, tag, library or search), then reveals the track.
+  function revealPlayingTrack() {
+
+    const trackId = globals.get('currentlyPlayingTrackId');
+    const view = globals.get('playingView');
+
+    if (trackId == null || !view) return;
+
+    if (view.folderView) {
+
+      // Search rebuilds its rows from the live search results, which may have
+      // moved on since playback started — restore the queue that is actually
+      // playing so the track is guaranteed to be in the list.
+      if (view.folderView.id === SEARCH_ID) {
+        const playing = globals.get('currentPlayingTracks') ?? [];
+        globals.set('searchResultIds', playing.map(t => t.trackId));
+      }
+
+      globals.set('selectedPlaylistId', null);
+      globals.set('selectedFolderView', view.folderView);
+
+    } else {
+
+      globals.set('selectedFolderView', null);
+      globals.set('selectedPlaylistId', view.playlistId);
+    }
+
+    saveAppState();
+
+    pendingRevealTrackId = trackId;
+  }
+
+  $effect(() => {
+
+    function handleKeyDown(e) {
+
+      const isMac = navigator.platform.toUpperCase().includes('MAC');
+      const trigger = isMac ? e.metaKey : e.ctrlKey;
+
+      if (!trigger || e.key !== 'l') return;
+
+      e.preventDefault();
+
+      revealPlayingTrack();
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  });
+
+  // Backspace / Delete removes the selected tracks from the open playlist.
+  // Playlist views only: folder, tag, library and search views aggregate tracks
+  // from elsewhere, so there is no single playlist to remove them from.
+  $effect(() => {
+
+    function handleKeyDown(e) {
+
+      if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+
+      // Never steal the key from a text field — the search box, rename modals…
+      const active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return;
+
+      // A modal owns the keyboard while it's up.
+      if (showDeleteConfirm) return;
+
+      if (!selectedPlaylistId || selectedFolderView) return;
+      if (!selectedTrackIds.size) return;
+
+      e.preventDefault();
+
+      removeFromPlaylist([...selectedTrackIds]);
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  });
 
   let numColWidth = $derived(
     `${Math.floor(Math.log10(Math.max(tracks.length, 1))) + 1}rem`
@@ -798,14 +884,13 @@
 
     const row = e.currentTarget;
 
-    if (!selectedPlaylistId && activeNodeId !== SEARCH_ID) return;
+    // Available in every view. The playlist-specific entry below is the only one
+    // that needs a selected playlist; the rest act on the track itself.
     e.preventDefault();
 
     const ids = selectedTrackIds.has(track.trackId)
       ? [...selectedTrackIds]
       : [track.trackId];
-
-    const idsSet = new Set(ids.map(String));
 
     const showInFinderLabel = window.electronAPI?.platform === 'darwin' ? 'Show in Finder' : 'Show in Explorer';
 
@@ -846,12 +931,7 @@
         {
           icon: 'trash',
           text: 'Delete from playlist',
-          callback: () => {
-
-            removeTracksFromPlaylist(selectedPlaylistId, ids);
-            selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
-            if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
-          },
+          callback: () => removeFromPlaylist(ids),
         },
       );
     }
@@ -894,16 +974,33 @@
     pendingRevealTrackId = trackId;
   }
 
+  // Drops track IDs from the selection after they stop being part of the view.
+  function dropFromSelection(ids) {
+
+    const idsSet = new Set(ids.map(String));
+
+    selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
+    if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+  }
+
+  // Removes tracks from the currently open playlist. Shared by the context menu
+  // item and the Backspace/Delete shortcut so the two can't drift apart.
+  function removeFromPlaylist(ids) {
+
+    if (!selectedPlaylistId || !ids.length) return;
+
+    removeTracksFromPlaylist(selectedPlaylistId, ids);
+
+    dropFromSelection(ids);
+  }
+
   // Runs only after the user confirms in the modal. Removes the tracks from the
   // library and every playlist referencing them; files on disk are untouched.
   function deleteFromLibrary() {
 
-    const idsSet = new Set(pendingDeleteIds.map(String));
-
     deleteTracksFromLibrary(pendingDeleteIds);
 
-    selectedTrackIds = new Set([...selectedTrackIds].filter(id => !idsSet.has(String(id))));
-    if (anchorTrackId && idsSet.has(String(anchorTrackId))) anchorTrackId = null;
+    dropFromSelection(pendingDeleteIds);
 
     pendingDeleteIds = [];
   }
